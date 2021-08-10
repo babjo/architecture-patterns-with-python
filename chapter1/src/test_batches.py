@@ -1,9 +1,9 @@
 import datetime
 from datetime import date
 
-from chapter1.src.model import Batch
-from chapter1.src.model import OrderLine
-from chapter1.src.model import allocate
+from model import Batch
+from model import OrderLine
+from model import allocate
 
 
 def test_allocating_to_a_batch_reduces_the_available_quantity():
