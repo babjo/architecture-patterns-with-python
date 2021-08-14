@@ -1,5 +1,5 @@
-sqlalchemy
 pytest
-requests
+sqlalchemy
 flask
 psycopg2-binary
+requests
