@@ -242,50 +242,52 @@
 <li>사본에 파일이 있지만 원본에는 없다면 사본의 파일을 삭제한다.</li>
 </ul>
 </li>
-<li>디렉토리 내 파일 비교를 위해 hash 함수가 필요하다.
-```python
-BLOCKSIZE = 65536</li>
+<li>디렉토리 내 파일 비교를 위해 hash 함수가 필요하다.</li>
 </ul>
-<p>def hash_file(path):
+<pre><code class="lang-python">BLOCKSIZE = <span class="hljs-number">65536</span>
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">hash_file</span>(<span class="hljs-params">path</span>):</span>
     hasher = hashlib.sha1()
-    with path.open(&quot;rb&quot;) as file:
+    <span class="hljs-keyword">with</span> path.<span class="hljs-built_in">open</span>(<span class="hljs-string">&quot;rb&quot;</span>) <span class="hljs-keyword">as</span> file:
         buf = file.read(BLOCKSIZE)
-        while buf:
+        <span class="hljs-keyword">while</span> buf:
             hasher.update(buf)
             buf = file.read(BLOCKSIZE)
-    return hasher.hexdigest()</p>
-<pre><code>
-- 그리고 아래처럼 구현할 수 있다.
-```python
-def sync(source, dest):
+    <span class="hljs-keyword">return</span> hasher.hexdigest()
+</code></pre>
+<ul>
+<li>그리고 아래처럼 구현할 수 있다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">sync</span>(<span class="hljs-params">source, dest</span>):</span>
     source_hashes = {}
-    # source 디렉토리 파일 hash 를 구한다.
-    for folder, _, files in os.walk(source):
-        for fn in files:
+    <span class="hljs-comment"># source 디렉토리 파일 hash 를 구한다.</span>
+    <span class="hljs-keyword">for</span> folder, _, files <span class="hljs-keyword">in</span> os.walk(source):
+        <span class="hljs-keyword">for</span> fn <span class="hljs-keyword">in</span> files:
             source_hashes[hash_file(Path(folder) / fn)] = fn
 
-    seen = set()
+    seen = <span class="hljs-built_in">set</span>()
 
-    # dest 디렉토리 파일 hash 를 구한다.
-    for folder, _, files in os.walk(dest):
-        for fn in files:
+    <span class="hljs-comment"># dest 디렉토리 파일 hash 를 구한다.</span>
+    <span class="hljs-keyword">for</span> folder, _, files <span class="hljs-keyword">in</span> os.walk(dest):
+        <span class="hljs-keyword">for</span> fn <span class="hljs-keyword">in</span> files:
             dest_path = Path(folder) / fn
             dest_hash = hash_file(dest_path)
             seen.add(dest_hash)
 
-            # dest 디렉토리 파일 중 source 디렉토리에 없으면 삭제한다.
-            if dest_hash not in source_hashes:
+            <span class="hljs-comment"># dest 디렉토리 파일 중 source 디렉토리에 없으면 삭제한다.</span>
+            <span class="hljs-keyword">if</span> dest_hash <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> source_hashes:
                 dest_path.remove()
 
-            # dest 디렉토리 파일 중 source 디렉토리에 있으나 파일 이름이 다르면 이름을 source 디렉토리 파일과 같게 만든다.
-            elif dest_hash in source_hashes and fn != source_hashes[dest_hash]:
+            <span class="hljs-comment"># dest 디렉토리 파일 중 source 디렉토리에 있으나 파일 이름이 다르면 이름을 source 디렉토리 파일과 같게 만든다.</span>
+            <span class="hljs-keyword">elif</span> dest_hash <span class="hljs-keyword">in</span> source_hashes <span class="hljs-keyword">and</span> fn != source_hashes[dest_hash]:
                 shutil.move(dest_path, Path(folder) / source_hashes[dest_hash])
 
-    for src_hash, fn in source_hashes.items():
-        # dest 디렉토리에 source 디렉토리 파일이 없으면 복사한다. 
-        if src_hash not in seen: 
+    <span class="hljs-keyword">for</span> src_hash, fn <span class="hljs-keyword">in</span> source_hashes.items():
+        <span class="hljs-comment"># dest 디렉토리에 source 디렉토리 파일이 없으면 복사한다. </span>
+        <span class="hljs-keyword">if</span> src_hash <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> seen: 
             shutil.copy(Path(source) / fn, Path(dest) / fn)
-</code></pre><ul>
+</code></pre>
+<ul>
 <li>위 구현의 단점<ol>
 <li>위 코드를 유닛 테스트하려면 I/O 를 피할 수 없다.<ul>
 <li>테스트 코드 내에서 실제 디렉토리 생성 및 파일 생성으로 환경을 만들어주고 함수를 수행해봐야할 것이다.</li>
@@ -300,73 +302,76 @@ def sync(source, dest):
 <ul>
 <li>유닛 테스트에서 I/O는 피해야한다.</li>
 <li>이를 위해 I/O(Imperative)와 실제 핵심로직(Functional Core)를 분리, 핵심로직만 테스트를 수행할 수 있다.</li>
-<li><p>실제 I/O와 함께 하는 테스트는 통합/인수 테스트에서 커버하고 많은 부분은 핵심로직 유닛테스트 작성하기로 한다.</p>
-<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">sync</span>(<span class="hljs-params">source, dest</span>):</span>
-  <span class="hljs-comment"># imperative shell step 1, 디렉토리 내 파일 해쉬를 모은다.</span>
-  source_hashes = read_paths_and_hashes(source)
-  dest_hashes = read_paths_and_hashes(dest)
-
-  <span class="hljs-comment"># step 2: functional core 를 호출한다.</span>
-  actions = determine_actions(source_hashes, dest_hashes, source, dest)
-
-  <span class="hljs-comment"># imperative shell step 3, functional core 결과값을 출력한다.</span>
-  <span class="hljs-keyword">for</span> action, *paths <span class="hljs-keyword">in</span> actions:
-      <span class="hljs-keyword">if</span> action == <span class="hljs-string">&quot;COPY&quot;</span>:
-          shutil.copyfile(*paths)
-      <span class="hljs-keyword">if</span> action == <span class="hljs-string">&quot;MOVE&quot;</span>:
-          shutil.move(*paths)
-      <span class="hljs-keyword">if</span> action == <span class="hljs-string">&quot;DELETE&quot;</span>:
-          os.remove(paths[<span class="hljs-number">0</span>])
-</code></pre>
-</li>
-<li>아래와 같이 <code>determine_actions</code>로 핵심로직을 I/O 없이 검증할 수 있다.
-```python
-def test_when_a_file_exists_in_the_source_but_not_the_destination():
-  source_hashes = {&quot;hash1&quot;: &quot;fn1&quot;}
-  dest_hashes = {}
-  actions = determine_actions(source_hashes, dest_hashes, Path(&quot;/src&quot;), Path(&quot;/dst&quot;))
-  assert list(actions) == [(&quot;COPY&quot;, Path(&quot;/src/fn1&quot;), Path(&quot;/dst/fn1&quot;))]</li>
+<li>실제 I/O와 함께 하는 테스트는 통합/인수 테스트에서 커버하고 많은 부분은 핵심로직 유닛테스트 작성하기로 한다.</li>
 </ul>
-<p>def test_when_a_file_has_been_renamed_in_the_source():
-    source_hashes = {&quot;hash1&quot;: &quot;fn1&quot;}
-    dest_hashes = {&quot;hash1&quot;: &quot;fn2&quot;}
-    actions = determine_actions(source_hashes, dest_hashes, Path(&quot;/src&quot;), Path(&quot;/dst&quot;))
-    assert list(actions) == [(&quot;MOVE&quot;, Path(&quot;/dst/fn2&quot;), Path(&quot;/dst/fn1&quot;))]</p>
-<pre><code>
-### 추상화
-- `Functional Core, Imperative Shell`를 통해 핵심로직에 대한 유닛테스트는 작성할 수 있었다.
-- 여전히 구체적인 `shutil`, `os`를 사용하며 `--dry-run` 플래그를 구현하기엔 확장성이 좋지않다.
-- I/O와 연관있는 부분은 추상화할 수 있다.
-```python
-class FakeFileSystem(list):
-    def copy(self, src, dest):
-        self.append((&apos;COPY&apos;, src, dest))
+<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">sync</span>(<span class="hljs-params">source, dest</span>):</span>
+    <span class="hljs-comment"># imperative shell step 1, 디렉토리 내 파일 해쉬를 모은다.</span>
+    source_hashes = read_paths_and_hashes(source)
+    dest_hashes = read_paths_and_hashes(dest)
 
-    def move(self, src, dest):
-        self.append((&apos;MOVE&apos;, src, dest))
+    <span class="hljs-comment"># step 2: functional core 를 호출한다.</span>
+    actions = determine_actions(source_hashes, dest_hashes, source, dest)
 
-    def delete(self, dest):
-        self.append((&apos;DELETE&apos;, dest))
+    <span class="hljs-comment"># imperative shell step 3, functional core 결과값을 출력한다.</span>
+    <span class="hljs-keyword">for</span> action, *paths <span class="hljs-keyword">in</span> actions:
+        <span class="hljs-keyword">if</span> action == <span class="hljs-string">&quot;COPY&quot;</span>:
+            shutil.copyfile(*paths)
+        <span class="hljs-keyword">if</span> action == <span class="hljs-string">&quot;MOVE&quot;</span>:
+            shutil.move(*paths)
+        <span class="hljs-keyword">if</span> action == <span class="hljs-string">&quot;DELETE&quot;</span>:
+            os.remove(paths[<span class="hljs-number">0</span>])
+</code></pre>
+<ul>
+<li>아래와 같이 <code>determine_actions</code>로 핵심로직을 I/O 없이 검증할 수 있다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_when_a_file_exists_in_the_source_but_not_the_destination</span>():</span>
+    source_hashes = {<span class="hljs-string">&quot;hash1&quot;</span>: <span class="hljs-string">&quot;fn1&quot;</span>}
+    dest_hashes = {}
+    actions = determine_actions(source_hashes, dest_hashes, Path(<span class="hljs-string">&quot;/src&quot;</span>), Path(<span class="hljs-string">&quot;/dst&quot;</span>))
+    <span class="hljs-keyword">assert</span> <span class="hljs-built_in">list</span>(actions) == [(<span class="hljs-string">&quot;COPY&quot;</span>, Path(<span class="hljs-string">&quot;/src/fn1&quot;</span>), Path(<span class="hljs-string">&quot;/dst/fn1&quot;</span>))]
 
-def sync(reader, filesystem, source_root, dest_root):
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_when_a_file_has_been_renamed_in_the_source</span>():</span>
+    source_hashes = {<span class="hljs-string">&quot;hash1&quot;</span>: <span class="hljs-string">&quot;fn1&quot;</span>}
+    dest_hashes = {<span class="hljs-string">&quot;hash1&quot;</span>: <span class="hljs-string">&quot;fn2&quot;</span>}
+    actions = determine_actions(source_hashes, dest_hashes, Path(<span class="hljs-string">&quot;/src&quot;</span>), Path(<span class="hljs-string">&quot;/dst&quot;</span>))
+    <span class="hljs-keyword">assert</span> <span class="hljs-built_in">list</span>(actions) == [(<span class="hljs-string">&quot;MOVE&quot;</span>, Path(<span class="hljs-string">&quot;/dst/fn2&quot;</span>), Path(<span class="hljs-string">&quot;/dst/fn1&quot;</span>))]
+</code></pre>
+<h3 id="추상화">추상화</h3>
+<ul>
+<li><code>Functional Core, Imperative Shell</code>를 통해 핵심로직에 대한 유닛테스트는 작성할 수 있었다.</li>
+<li>여전히 구체적인 <code>shutil</code>, <code>os</code>를 사용하며 <code>--dry-run</code> 플래그를 구현하기엔 확장성이 좋지않다.</li>
+<li>I/O와 연관있는 부분은 추상화할 수 있다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FakeFileSystem</span>(<span class="hljs-params"><span class="hljs-built_in">list</span></span>):</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">copy</span>(<span class="hljs-params">self, src, dest</span>):</span>
+        self.append((<span class="hljs-string">&apos;COPY&apos;</span>, src, dest))
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">move</span>(<span class="hljs-params">self, src, dest</span>):</span>
+        self.append((<span class="hljs-string">&apos;MOVE&apos;</span>, src, dest))
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">delete</span>(<span class="hljs-params">self, dest</span>):</span>
+        self.append((<span class="hljs-string">&apos;DELETE&apos;</span>, dest))
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">sync</span>(<span class="hljs-params">reader, filesystem, source_root, dest_root</span>):</span>
     source_hashes = reader(source_root)
     dest_hashes = reader(dest_root)
 
-    for sha, filename in source_hashes.items():
-        if sha not in dest_hashes:
+    <span class="hljs-keyword">for</span> sha, filename <span class="hljs-keyword">in</span> source_hashes.items():
+        <span class="hljs-keyword">if</span> sha <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> dest_hashes:
             sourcepath = source_root / filename
             destpath = dest_root / filename
             filesystem.copy(destpath, sourcepath)
 
-        elif dest_hashes[sha] != filename:
+        <span class="hljs-keyword">elif</span> dest_hashes[sha] != filename:
             olddestpath = dest_root / dest_hashes[sha]
             newdestpath = dest_root / filename
             filesystem.move(olddestpath, newdestpath)
 
-    for sha, filename in dest_hashes.items():
-        if sha not in source_hashes:
+    <span class="hljs-keyword">for</span> sha, filename <span class="hljs-keyword">in</span> dest_hashes.items():
+        <span class="hljs-keyword">if</span> sha <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> source_hashes:
             filesystem.delete(dest_root / filename)
-</code></pre><ul>
+</code></pre>
+<ul>
 <li><code>reader</code>와 <code>filesystem</code>으로 추상화를 시켰고 테스트에서는 Fake 를 사용할 수 있어진다. (I/O 없는 유닛테스트)</li>
 <li><code>--dry-run</code> 플래그용 <code>filesystem</code> 구현체를 만들어서 넣어주면 <code>sync(...)</code>코드 변경 없이 구현할 수 있다.</li>
 </ul>
@@ -423,7 +428,7 @@ def sync(reader, filesystem, source_root, dest_root):
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Chapter 3. 막간: 결합과 추상화","level":"2.3","depth":1,"next":{"title":"Chapter 4. 서비스 계층","level":"2.4","depth":1,"path":"chapter4/README.md","ref":"chapter4/README.md","articles":[]},"previous":{"title":"Chapter 2. 저장소 패턴","level":"2.2","depth":1,"path":"chapter2/README.md","ref":"chapter2/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter3/README.md","mtime":"2021-08-14T15:00:22.615Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-14T15:00:30.554Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Chapter 3. 막간: 결합과 추상화","level":"2.3","depth":1,"next":{"title":"Chapter 4. 서비스 계층","level":"2.4","depth":1,"path":"chapter4/README.md","ref":"chapter4/README.md","articles":[]},"previous":{"title":"Chapter 2. 저장소 패턴","level":"2.2","depth":1,"path":"chapter2/README.md","ref":"chapter2/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter3/README.md","mtime":"2021-08-14T15:09:24.324Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-14T15:09:30.289Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>

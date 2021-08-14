@@ -226,100 +226,104 @@
 <ul>
 <li>플라스크를 이용하여 만든 기능을 웹으로 제공하고 싶다.</li>
 <li>TDD이니 테스트 코드부터 작성한다.</li>
-<li>E2E 테스트를 작성한다. (느린 테스트)
-```python<h1 id="testapipy">test_api.py</h1>
-</li>
+<li>E2E 테스트를 작성한다. (느린 테스트)</li>
 </ul>
-<p>@pytest.mark.usefixtures(&apos;restart_api&apos;)
-def test_api_returns_allocation(add_stock):
-    sku, othersku = random_sku(), random_sku(&quot;other&quot;)
-    earlybatch = random_batchref(&quot;1&quot;)
-    laterbatch = random_batchref(&quot;2&quot;)
-    otherbatch = random_batchref(&quot;3&quot;)
+<pre><code class="lang-python"><span class="hljs-comment"># test_api.py</span>
+<span class="hljs-meta">@pytest.mark.usefixtures(<span class="hljs-params"><span class="hljs-string">&apos;restart_api&apos;</span></span>)</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_api_returns_allocation</span>(<span class="hljs-params">add_stock</span>):</span>
+    sku, othersku = random_sku(), random_sku(<span class="hljs-string">&quot;other&quot;</span>)
+    earlybatch = random_batchref(<span class="hljs-string">&quot;1&quot;</span>)
+    laterbatch = random_batchref(<span class="hljs-string">&quot;2&quot;</span>)
+    otherbatch = random_batchref(<span class="hljs-string">&quot;3&quot;</span>)
     add_stock([
-        (laterbatch, sku, 100, &apos;2011-01-02&apos;),
-        (earlybatch, sku, 100, &apos;2011-01-01&apos;),
-        (otherbatch, othersku, 100, None)
+        (laterbatch, sku, <span class="hljs-number">100</span>, <span class="hljs-string">&apos;2011-01-02&apos;</span>),
+        (earlybatch, sku, <span class="hljs-number">100</span>, <span class="hljs-string">&apos;2011-01-01&apos;</span>),
+        (otherbatch, othersku, <span class="hljs-number">100</span>, <span class="hljs-literal">None</span>)
     ])
-    data = {&apos;orderid&apos;: random_orderid(), &apos;sku&apos;: sku, &apos;qty&apos;: 3}
+    data = {<span class="hljs-string">&apos;orderid&apos;</span>: random_orderid(), <span class="hljs-string">&apos;sku&apos;</span>: sku, <span class="hljs-string">&apos;qty&apos;</span>: <span class="hljs-number">3</span>}
     url = config.get_api_url()
-    r = requests.post(f&apos;{url}/allocate&apos;, json=data)
-    assert r.status_code == 201
-    assert r.json()[&apos;batchref&apos;] == earlybatch</p>
-<pre><code>- 로컬에 postgresql, api 서버를 올리고 requests 로 실제 테스트한다.
-
-### 직접 구현하기
-- 가장 뻔한 방법으로 구현해본다.
-- endpoint 함수에서 직접 repo 로 도메인 모델을 가져와 작업한다. 마지막에 `session.commit()` 해준다.
-```python
-# flask_app.py
-
-@app.route(&quot;/allocate&quot;, methods=[&quot;POST&quot;])
-def allocate_endpoint():
+    r = requests.post(<span class="hljs-string">f&apos;<span class="hljs-subst">{url}</span>/allocate&apos;</span>, json=data)
+    <span class="hljs-keyword">assert</span> r.status_code == <span class="hljs-number">201</span>
+    <span class="hljs-keyword">assert</span> r.json()[<span class="hljs-string">&apos;batchref&apos;</span>] == earlybatch
+</code></pre>
+<ul>
+<li>로컬에 postgresql, api 서버를 올리고 requests 로 실제 테스트한다.</li>
+</ul>
+<h3 id="직접-구현하기">직접 구현하기</h3>
+<ul>
+<li>가장 뻔한 방법으로 구현해본다.</li>
+<li>endpoint 함수에서 직접 repo 로 도메인 모델을 가져와 작업한다. 마지막에 <code>session.commit()</code> 해준다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-comment"># flask_app.py</span>
+<span class="hljs-meta">@app.route(<span class="hljs-params"><span class="hljs-string">&quot;/allocate&quot;</span>, methods=[<span class="hljs-string">&quot;POST&quot;</span>]</span>)</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate_endpoint</span>():</span>
     session = get_session()
-    batches = repository.SqlAlchemyRepository(session).list()
+    batches = repository.SqlAlchemyRepository(session).<span class="hljs-built_in">list</span>()
     line = model.OrderLine(
-        request.json[&quot;orderid&quot;], request.json[&quot;sku&quot;], request.json[&quot;qty&quot;]
+        request.json[<span class="hljs-string">&quot;orderid&quot;</span>], request.json[<span class="hljs-string">&quot;sku&quot;</span>], request.json[<span class="hljs-string">&quot;qty&quot;</span>]
     )
     batchref = model.allocate(line, batches)
     session.commit()
 
-    return {&quot;batchref&quot;: batchref}, 201
-</code></pre><h3 id="오류-조건-추가">오류 조건 추가</h3>
+    <span class="hljs-keyword">return</span> {<span class="hljs-string">&quot;batchref&quot;</span>: batchref}, <span class="hljs-number">201</span>
+</code></pre>
+<h3 id="오류-조건-추가">오류 조건 추가</h3>
 <ul>
 <li>여기서 실패하는 경우도 추가하고 싶다.</li>
-<li>재고가 없는 경우, 잘못된 sku 가 들어온 경우 E2E 테스트코드 작성한다.
-```python<h1 id="testapipy">test_api.py</h1>
-</li>
+<li>재고가 없는 경우, 잘못된 sku 가 들어온 경우 E2E 테스트코드 작성한다.</li>
 </ul>
-<p>@pytest.mark.usefixtures(&apos;restart_api&apos;)
-def test_400_message_for_out_of_stock(add_stock):
+<pre><code class="lang-python"><span class="hljs-comment"># test_api.py</span>
+<span class="hljs-meta">@pytest.mark.usefixtures(<span class="hljs-params"><span class="hljs-string">&apos;restart_api&apos;</span></span>)</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_400_message_for_out_of_stock</span>(<span class="hljs-params">add_stock</span>):</span>
     sku, small_batch, large_order = random_sku(), random_batchref(), random_orderid()
     add_stock([
-        (small_batch, sku, 10, &apos;2011-01-01&apos;)
+        (small_batch, sku, <span class="hljs-number">10</span>, <span class="hljs-string">&apos;2011-01-01&apos;</span>)
     ])
-    data = {&apos;orderid&apos;: large_order, &apos;sku&apos;: sku, &apos;qty&apos;: 20}
+    data = {<span class="hljs-string">&apos;orderid&apos;</span>: large_order, <span class="hljs-string">&apos;sku&apos;</span>: sku, <span class="hljs-string">&apos;qty&apos;</span>: <span class="hljs-number">20</span>}
     url = config.get_api_url()
-    r = requests.post(f&apos;{url}/allocate&apos;, json=data)
-    assert r.status_code == 400
-    assert r.json()[&apos;message&apos;] == f&apos;Out of stock for sku {sku}&apos;</p>
-<p>@pytest.mark.usefixtures(&apos;restart_api&apos;)
-def test_400_message_for_invaild_sku():
+    r = requests.post(<span class="hljs-string">f&apos;<span class="hljs-subst">{url}</span>/allocate&apos;</span>, json=data)
+    <span class="hljs-keyword">assert</span> r.status_code == <span class="hljs-number">400</span>
+    <span class="hljs-keyword">assert</span> r.json()[<span class="hljs-string">&apos;message&apos;</span>] == <span class="hljs-string">f&apos;Out of stock for sku <span class="hljs-subst">{sku}</span>&apos;</span>
+
+
+<span class="hljs-meta">@pytest.mark.usefixtures(<span class="hljs-params"><span class="hljs-string">&apos;restart_api&apos;</span></span>)</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_400_message_for_invaild_sku</span>():</span>
     unknown_sku, orderid = random_sku(), random_orderid()
-    data = {&apos;orderid&apos;: orderid, &apos;sku&apos;: unknown_sku, &apos;qty&apos;: 20}
+    data = {<span class="hljs-string">&apos;orderid&apos;</span>: orderid, <span class="hljs-string">&apos;sku&apos;</span>: unknown_sku, <span class="hljs-string">&apos;qty&apos;</span>: <span class="hljs-number">20</span>}
     url = config.get_api_url()
-    r = requests.post(f&apos;{url}/allocate&apos;, json=data)
-    assert r.status_code == 400
-    assert r.json()[&apos;message&apos;] == f&apos;Invalid sku {unknown_sku}&apos;</p>
-<pre><code>
-#### 복잡해지는 `allocate_endpoint` 함수
-- 위 오류 조건 추가로 `flask_app.py` 에 구현 필요하다.
-- `allocate_endpoint` 를 수정하면 되는데 점점 복잡해지는 느낌이다.
-```python
-# flask_app.py
+    r = requests.post(<span class="hljs-string">f&apos;<span class="hljs-subst">{url}</span>/allocate&apos;</span>, json=data)
+    <span class="hljs-keyword">assert</span> r.status_code == <span class="hljs-number">400</span>
+    <span class="hljs-keyword">assert</span> r.json()[<span class="hljs-string">&apos;message&apos;</span>] == <span class="hljs-string">f&apos;Invalid sku <span class="hljs-subst">{unknown_sku}</span>&apos;</span>
+</code></pre>
+<h4 id="복잡해지는-allocateendpoint-함수">복잡해지는 <code>allocate_endpoint</code> 함수</h4>
+<ul>
+<li>위 오류 조건 추가로 <code>flask_app.py</code> 에 구현 필요하다.</li>
+<li><code>allocate_endpoint</code> 를 수정하면 되는데 점점 복잡해지는 느낌이다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-comment"># flask_app.py</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">is_valid_sku</span>(<span class="hljs-params">sku, batches</span>):</span>
+    <span class="hljs-keyword">return</span> sku <span class="hljs-keyword">in</span> {b.sku <span class="hljs-keyword">for</span> b <span class="hljs-keyword">in</span> batches}
 
-def is_valid_sku(sku, batches):
-    return sku in {b.sku for b in batches}
-
-@app.route(&quot;/allocate&quot;, methods=[&quot;POST&quot;])
-def allocate_endpoint():
+<span class="hljs-meta">@app.route(<span class="hljs-params"><span class="hljs-string">&quot;/allocate&quot;</span>, methods=[<span class="hljs-string">&quot;POST&quot;</span>]</span>)</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate_endpoint</span>():</span>
     session = get_session()
-    batches = repository.SqlAlchemyRepository(session).list()
+    batches = repository.SqlAlchemyRepository(session).<span class="hljs-built_in">list</span>()
     line = model.OrderLine(
-        request.json[&quot;orderid&quot;], request.json[&quot;sku&quot;], request.json[&quot;qty&quot;]
+        request.json[<span class="hljs-string">&quot;orderid&quot;</span>], request.json[<span class="hljs-string">&quot;sku&quot;</span>], request.json[<span class="hljs-string">&quot;qty&quot;</span>]
     )
 
-    if not is_valid_sku(line.sku, batches):
-        return {&quot;message&quot;: f&quot;Invalid sku {line.sku}&quot;}, 400
+    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> is_valid_sku(line.sku, batches):
+        <span class="hljs-keyword">return</span> {<span class="hljs-string">&quot;message&quot;</span>: <span class="hljs-string">f&quot;Invalid sku <span class="hljs-subst">{line.sku}</span>&quot;</span>}, <span class="hljs-number">400</span>
 
-    try:
+    <span class="hljs-keyword">try</span>:
         batchref = model.allocate(line, batches)
-    except model.OutOfStock as e:
-        return {&quot;message&quot;: str(e)}, 400
+    <span class="hljs-keyword">except</span> model.OutOfStock <span class="hljs-keyword">as</span> e:
+        <span class="hljs-keyword">return</span> {<span class="hljs-string">&quot;message&quot;</span>: <span class="hljs-built_in">str</span>(e)}, <span class="hljs-number">400</span>
     session.commit()
 
-    return {&quot;batchref&quot;: batchref}, 201
-</code></pre><ul>
+    <span class="hljs-keyword">return</span> {<span class="hljs-string">&quot;batchref&quot;</span>: batchref}, <span class="hljs-number">201</span>
+</code></pre>
+<ul>
 <li>더 큰 문제는 E2E 테스트가 많아진다는 것이다.<ul>
 <li>E2E 테스트보다는 유닛 테스트 수가 많은 것이 좋다.</li>
 </ul>
@@ -333,125 +337,131 @@ def allocate_endpoint():
 <li>도메인 모델 조작 성공 후 저장을 위해 <code>session.commit()</code> 한다.</li>
 </ul>
 </li>
-<li>오케스트레이션 계층은 서비스 계층으로 빼내는 것이 좋다.
-```python<h1 id="servicespy">services.py</h1>
-class InvalidSku(Exception):
-  pass</li>
+<li>오케스트레이션 계층은 서비스 계층으로 빼내는 것이 좋다.</li>
 </ul>
-<p>def is_valid_sku(sku, batches):
-    return sku in {b.sku for b in batches}</p>
-<p>def allocate(line: OrderLine, repo: AbstractRepository, session) -&gt; str:
-    batches = repo.list()
-    if not is_valid_sku(line.sku, batches):
-        raise InvalidSku(f&quot;Invalid sku {line.sku}&quot;)
+<pre><code class="lang-python"><span class="hljs-comment"># services.py</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">InvalidSku</span>(<span class="hljs-params">Exception</span>):</span>
+    <span class="hljs-keyword">pass</span>
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">is_valid_sku</span>(<span class="hljs-params">sku, batches</span>):</span>
+    <span class="hljs-keyword">return</span> sku <span class="hljs-keyword">in</span> {b.sku <span class="hljs-keyword">for</span> b <span class="hljs-keyword">in</span> batches}
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate</span>(<span class="hljs-params">line: OrderLine, repo: AbstractRepository, session</span>) -&gt; <span class="hljs-built_in">str</span>:</span>
+    batches = repo.<span class="hljs-built_in">list</span>()
+    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> is_valid_sku(line.sku, batches):
+        <span class="hljs-keyword">raise</span> InvalidSku(<span class="hljs-string">f&quot;Invalid sku <span class="hljs-subst">{line.sku}</span>&quot;</span>)
     batchref = model.allocate(line, batches)
     session.commit()
-    return batchref</p>
-<pre><code>
-#### FakeRepository 사용하기
-- 서비스 계층에 대한 테스트코드 필요하다.
-- 이 때 저장소에 대한 의존성을 해결해줄 `FakeRepository`를 구현하고 이용할 수 있다.
-```python
-# test_service.py
+    <span class="hljs-keyword">return</span> batchref
+</code></pre>
+<h4 id="fakerepository-사용하기">FakeRepository 사용하기</h4>
+<ul>
+<li>서비스 계층에 대한 테스트코드 필요하다.</li>
+<li>이 때 저장소에 대한 의존성을 해결해줄 <code>FakeRepository</code>를 구현하고 이용할 수 있다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-comment"># test_service.py</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FakeRepository</span>(<span class="hljs-params">repository.AbstractRepository</span>):</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, batches</span>):</span>
+        self._batches = <span class="hljs-built_in">set</span>(batches)
 
-class FakeRepository(repository.AbstractRepository):
-    def __init__(self, batches):
-        self._batches = set(batches)
-
-    def add(self, batch):
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">add</span>(<span class="hljs-params">self, batch</span>):</span>
         self._batches.add(batch)
 
-    def get(self, reference):
-        return next(b for b in self._batches if b.reference == reference)
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get</span>(<span class="hljs-params">self, reference</span>):</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-built_in">next</span>(b <span class="hljs-keyword">for</span> b <span class="hljs-keyword">in</span> self._batches <span class="hljs-keyword">if</span> b.reference == reference)
 
-    def list(self):
-        return list(self._batches)
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">list</span>(<span class="hljs-params">self</span>):</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-built_in">list</span>(self._batches)
 
-class FakeSession:
-    committed = False
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FakeSession</span>:</span>
+    committed = <span class="hljs-literal">False</span>
 
-    def commit(self):
-        self.committed = True
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">commit</span>(<span class="hljs-params">self</span>):</span>
+        self.committed = <span class="hljs-literal">True</span>
 
-def test_returns_allocation():
-    line = model.OrderLine(&quot;o1&quot;, &quot;COMPLICATED-LAMP&quot;, 10)
-    batch = model.Batch(&quot;b1&quot;, &quot;COMPLICATED-LAMP&quot;, 100, eta=None)
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_returns_allocation</span>():</span>
+    line = model.OrderLine(<span class="hljs-string">&quot;o1&quot;</span>, <span class="hljs-string">&quot;COMPLICATED-LAMP&quot;</span>, <span class="hljs-number">10</span>)
+    batch = model.Batch(<span class="hljs-string">&quot;b1&quot;</span>, <span class="hljs-string">&quot;COMPLICATED-LAMP&quot;</span>, <span class="hljs-number">100</span>, eta=<span class="hljs-literal">None</span>)
     repo = FakeRepository([batch])
 
     result = services.allocate(line, repo, FakeSession())
-    assert result == &quot;b1&quot;
+    <span class="hljs-keyword">assert</span> result == <span class="hljs-string">&quot;b1&quot;</span>
 
-def test_error_for_invalid_sku():
-    line = model.OrderLine(&quot;o1&quot;, &quot;NONEXISTENTSKU&quot;, 10)
-    batch = model.Batch(&quot;b1&quot;, &quot;AREALSKU&quot;, 100, eta=None)
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_error_for_invalid_sku</span>():</span>
+    line = model.OrderLine(<span class="hljs-string">&quot;o1&quot;</span>, <span class="hljs-string">&quot;NONEXISTENTSKU&quot;</span>, <span class="hljs-number">10</span>)
+    batch = model.Batch(<span class="hljs-string">&quot;b1&quot;</span>, <span class="hljs-string">&quot;AREALSKU&quot;</span>, <span class="hljs-number">100</span>, eta=<span class="hljs-literal">None</span>)
     repo = FakeRepository([batch])
 
-    with pytest.raises(services.InvalidSku, match=&quot;Invalid sku NONEXISTENTSKU&quot;):
+    <span class="hljs-keyword">with</span> pytest.raises(services.InvalidSku, match=<span class="hljs-string">&quot;Invalid sku NONEXISTENTSKU&quot;</span>):
         services.allocate(line, repo, FakeSession())
 
-def test_commits():
-    line = model.OrderLine(&quot;o1&quot;, &quot;OMINOUS-MIRROR&quot;, 10)
-    batch = model.Batch(&quot;b1&quot;, &quot;OMINOUS-MIRROR&quot;, 100, eta=None)
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_commits</span>():</span>
+    line = model.OrderLine(<span class="hljs-string">&quot;o1&quot;</span>, <span class="hljs-string">&quot;OMINOUS-MIRROR&quot;</span>, <span class="hljs-number">10</span>)
+    batch = model.Batch(<span class="hljs-string">&quot;b1&quot;</span>, <span class="hljs-string">&quot;OMINOUS-MIRROR&quot;</span>, <span class="hljs-number">100</span>, eta=<span class="hljs-literal">None</span>)
     repo = FakeRepository([batch])
     session = FakeSession()
 
     services.allocate(line, repo, session)
-    assert session.committed is True
-</code></pre><h4 id="서비스-계층에-위임하는-플라스크-앱">서비스 계층에 위임하는 플라스크 앱</h4>
+    <span class="hljs-keyword">assert</span> session.committed <span class="hljs-keyword">is</span> <span class="hljs-literal">True</span>
+</code></pre>
+<h4 id="서비스-계층에-위임하는-플라스크-앱">서비스 계층에 위임하는 플라스크 앱</h4>
 <ul>
-<li>서비스 계층을 만들어줬으니 <code>allocate_endpoint</code> 함수에서 위임해주도록 하자.
-```python<h1 id="flaskapppy">flask_app.py</h1>
-</li>
+<li>서비스 계층을 만들어줬으니 <code>allocate_endpoint</code> 함수에서 위임해주도록 하자.</li>
 </ul>
-<p>@app.route(&quot;/allocate&quot;, methods=[&quot;POST&quot;])
-def allocate_endpoint():
+<pre><code class="lang-python"><span class="hljs-comment"># flask_app.py </span>
+<span class="hljs-meta">@app.route(<span class="hljs-params"><span class="hljs-string">&quot;/allocate&quot;</span>, methods=[<span class="hljs-string">&quot;POST&quot;</span>]</span>)</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate_endpoint</span>():</span>
     session = get_session()
     repo = repository.SqlAlchemyRepository(session)
-    line = model.OrderLine(request.json[&quot;orderid&quot;], request.json[&quot;sku&quot;], request.json[&quot;qty&quot;])
-    try:</p>
-<pre><code>    # service 계층에 위임
-    batchref = services.allocate(line, repo, session)
-except (model.OutOfStock, services.InvalidSku) as e:
-    return {&quot;message&quot;: str(e)}, 400
+    line = model.OrderLine(request.json[<span class="hljs-string">&quot;orderid&quot;</span>], request.json[<span class="hljs-string">&quot;sku&quot;</span>], request.json[<span class="hljs-string">&quot;qty&quot;</span>])
+    <span class="hljs-keyword">try</span>:
+        <span class="hljs-comment"># service 계층에 위임</span>
+        batchref = services.allocate(line, repo, session)
+    <span class="hljs-keyword">except</span> (model.OutOfStock, services.InvalidSku) <span class="hljs-keyword">as</span> e:
+        <span class="hljs-keyword">return</span> {<span class="hljs-string">&quot;message&quot;</span>: <span class="hljs-built_in">str</span>(e)}, <span class="hljs-number">400</span>
 
-return {&quot;batchref&quot;: batchref}, 201
-</code></pre><pre><code>- 서비스 계층에 위임하고 테스트 코드로 검증했으니 불필요한 E2E 테스트는 지울 수 있다.
-  - 성공 케이스 하나, 실패 케이스 하나로 정리할 수 있다.
-  - 웹 기능을 테스트하는 것만 남긴다. (오케스트레이션 기능들은 서비스 계층 테스트로 커버한다.) 
-```python
-# test_api.py
-
-@pytest.mark.usefixtures(&quot;restart_api&quot;)
-def test_happy_path_returns_201_and_allocated_batch(add_stock):
-    sku, othersku = random_sku(), random_sku(&quot;other&quot;)
-    earlybatch = random_batchref(1)
-    laterbatch = random_batchref(2)
-    otherbatch = random_batchref(3)
+    <span class="hljs-keyword">return</span> {<span class="hljs-string">&quot;batchref&quot;</span>: batchref}, <span class="hljs-number">201</span>
+</code></pre>
+<ul>
+<li>서비스 계층에 위임하고 테스트 코드로 검증했으니 불필요한 E2E 테스트는 지울 수 있다.<ul>
+<li>성공 케이스 하나, 실패 케이스 하나로 정리할 수 있다.</li>
+<li>웹 기능을 테스트하는 것만 남긴다. (오케스트레이션 기능들은 서비스 계층 테스트로 커버한다.) </li>
+</ul>
+</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-comment"># test_api.py</span>
+<span class="hljs-meta">@pytest.mark.usefixtures(<span class="hljs-params"><span class="hljs-string">&quot;restart_api&quot;</span></span>)</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_happy_path_returns_201_and_allocated_batch</span>(<span class="hljs-params">add_stock</span>):</span>
+    sku, othersku = random_sku(), random_sku(<span class="hljs-string">&quot;other&quot;</span>)
+    earlybatch = random_batchref(<span class="hljs-number">1</span>)
+    laterbatch = random_batchref(<span class="hljs-number">2</span>)
+    otherbatch = random_batchref(<span class="hljs-number">3</span>)
     add_stock(
         [
-            (laterbatch, sku, 100, &quot;2011-01-02&quot;),
-            (earlybatch, sku, 100, &quot;2011-01-01&quot;),
-            (otherbatch, othersku, 100, None),
+            (laterbatch, sku, <span class="hljs-number">100</span>, <span class="hljs-string">&quot;2011-01-02&quot;</span>),
+            (earlybatch, sku, <span class="hljs-number">100</span>, <span class="hljs-string">&quot;2011-01-01&quot;</span>),
+            (otherbatch, othersku, <span class="hljs-number">100</span>, <span class="hljs-literal">None</span>),
         ]
     )
-    data = {&quot;orderid&quot;: random_orderid(), &quot;sku&quot;: sku, &quot;qty&quot;: 3}
+    data = {<span class="hljs-string">&quot;orderid&quot;</span>: random_orderid(), <span class="hljs-string">&quot;sku&quot;</span>: sku, <span class="hljs-string">&quot;qty&quot;</span>: <span class="hljs-number">3</span>}
     url = config.get_api_url()
 
-    r = requests.post(f&quot;{url}/allocate&quot;, json=data)
+    r = requests.post(<span class="hljs-string">f&quot;<span class="hljs-subst">{url}</span>/allocate&quot;</span>, json=data)
 
-    assert r.status_code == 201
-    assert r.json()[&quot;batchref&quot;] == earlybatch
+    <span class="hljs-keyword">assert</span> r.status_code == <span class="hljs-number">201</span>
+    <span class="hljs-keyword">assert</span> r.json()[<span class="hljs-string">&quot;batchref&quot;</span>] == earlybatch
 
 
-@pytest.mark.usefixtures(&quot;restart_api&quot;)
-def test_unhappy_path_returns_400_and_error_message():
+<span class="hljs-meta">@pytest.mark.usefixtures(<span class="hljs-params"><span class="hljs-string">&quot;restart_api&quot;</span></span>)</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_unhappy_path_returns_400_and_error_message</span>():</span>
     unknown_sku, orderid = random_sku(), random_orderid()
-    data = {&quot;orderid&quot;: orderid, &quot;sku&quot;: unknown_sku, &quot;qty&quot;: 20}
+    data = {<span class="hljs-string">&quot;orderid&quot;</span>: orderid, <span class="hljs-string">&quot;sku&quot;</span>: unknown_sku, <span class="hljs-string">&quot;qty&quot;</span>: <span class="hljs-number">20</span>}
     url = config.get_api_url()
-    r = requests.post(f&quot;{url}/allocate&quot;, json=data)
-    assert r.status_code == 400
-    assert r.json()[&quot;message&quot;] == f&quot;Invalid sku {unknown_sku}&quot;
-</code></pre><h3 id="애플리케이션-서비스-vs-도메인-서비스">애플리케이션 서비스 vs 도메인 서비스</h3>
+    r = requests.post(<span class="hljs-string">f&quot;<span class="hljs-subst">{url}</span>/allocate&quot;</span>, json=data)
+    <span class="hljs-keyword">assert</span> r.status_code == <span class="hljs-number">400</span>
+    <span class="hljs-keyword">assert</span> r.json()[<span class="hljs-string">&quot;message&quot;</span>] == <span class="hljs-string">f&quot;Invalid sku <span class="hljs-subst">{unknown_sku}</span>&quot;</span>
+</code></pre>
+<h3 id="애플리케이션-서비스-vs-도메인-서비스">애플리케이션 서비스 vs 도메인 서비스</h3>
 <ul>
 <li>애플리케이션 서비스는 서비스 계층을 의미한다. 오케스트레이션 작업을 위주로 한다.<ul>
 <li>데이터베이스에서 데이터를 얻는다.</li>
@@ -504,7 +514,7 @@ def test_unhappy_path_returns_400_and_error_message():
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Chapter 4. 서비스 계층","level":"2.4","depth":1,"previous":{"title":"Chapter 3. 막간: 결합과 추상화","level":"2.3","depth":1,"path":"chapter3/README.md","ref":"chapter3/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter4/README.md","mtime":"2021-08-14T15:00:22.619Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-14T15:00:30.554Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Chapter 4. 서비스 계층","level":"2.4","depth":1,"previous":{"title":"Chapter 3. 막간: 결합과 추상화","level":"2.3","depth":1,"path":"chapter3/README.md","ref":"chapter3/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter4/README.md","mtime":"2021-08-14T15:09:24.324Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-14T15:09:30.289Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>

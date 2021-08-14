@@ -230,106 +230,112 @@
 <h3 id="단위테스트">단위테스트</h3>
 <ul>
 <li>도메인 모델 코드를 바로 작성하지 않고 테스트부터 작성한다. (TDD)</li>
-<li><p>포인트는 비지니스 영역에 있는 용어들을 가져와 작성한다.</p>
-<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_allocating_to_a_batch_reduces_the_available_quantity</span>():</span>
-  <span class="hljs-comment"># given</span>
-  batch = Batch(<span class="hljs-string">&quot;batch-001&quot;</span>, <span class="hljs-string">&quot;SMALL-TABLE&quot;</span>, qty=<span class="hljs-number">20</span>, eta=date.today())
-  line = OrderLine(<span class="hljs-string">&apos;order-ref&apos;</span>, <span class="hljs-string">&quot;SMALL-TABLE&quot;</span>, <span class="hljs-number">2</span>)
-
-  <span class="hljs-comment"># when</span>
-  batch.allocate(line)
-
-  <span class="hljs-comment"># then</span>
-  <span class="hljs-keyword">assert</span> batch.available_quantity == <span class="hljs-number">18</span>
-</code></pre>
-</li>
-<li><p>위 테스트가 통과할 수 있도록 도메인 모델을 작성한다.
-```python
-@dataclass(frozen=True)
-class OrderLine:
-  orderid: str
-  sku: str
-  qty: int</p>
-</li>
+<li>포인트는 비지니스 영역에 있는 용어들을 가져와 작성한다.</li>
 </ul>
-<p>class Batch:
-    def <strong>init</strong>(self, ref: str, sku: str, qty: int, eta: Optional[date]):
+<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_allocating_to_a_batch_reduces_the_available_quantity</span>():</span>
+    <span class="hljs-comment"># given</span>
+    batch = Batch(<span class="hljs-string">&quot;batch-001&quot;</span>, <span class="hljs-string">&quot;SMALL-TABLE&quot;</span>, qty=<span class="hljs-number">20</span>, eta=date.today())
+    line = OrderLine(<span class="hljs-string">&apos;order-ref&apos;</span>, <span class="hljs-string">&quot;SMALL-TABLE&quot;</span>, <span class="hljs-number">2</span>)
+
+    <span class="hljs-comment"># when</span>
+    batch.allocate(line)
+
+    <span class="hljs-comment"># then</span>
+    <span class="hljs-keyword">assert</span> batch.available_quantity == <span class="hljs-number">18</span>
+</code></pre>
+<ul>
+<li>위 테스트가 통과할 수 있도록 도메인 모델을 작성한다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-meta">@dataclass(<span class="hljs-params">frozen=<span class="hljs-literal">True</span></span>)</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">OrderLine</span>:</span>
+    orderid: <span class="hljs-built_in">str</span>
+    sku: <span class="hljs-built_in">str</span>
+    qty: <span class="hljs-built_in">int</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Batch</span>:</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, ref: <span class="hljs-built_in">str</span>, sku: <span class="hljs-built_in">str</span>, qty: <span class="hljs-built_in">int</span>, eta: <span class="hljs-type">Optional</span>[date]</span>):</span>
         self.reference = ref
         self.sku = sku
         self.eta = eta
-        self.available_quantity = qty</p>
-<pre><code>def allocate(self, line: OrderLine):
-    self.available_quantity -= line.qty
-</code></pre><pre><code>
-- 이어서 `can_allocate` 메소드에 대해 테스트 코드를 작성한다.
-```python
-def make_batch_and_line(sku, batch_qty, line_qty):
-    return (
-        Batch(&quot;batch-001&quot;, sku, batch_qty, eta=date.today()),
-        OrderLine(&quot;order-123&quot;, sku, line_qty)
+        self.available_quantity = qty
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate</span>(<span class="hljs-params">self, line: OrderLine</span>):</span>
+        self.available_quantity -= line.qty
+</code></pre>
+<ul>
+<li>이어서 <code>can_allocate</code> 메소드에 대해 테스트 코드를 작성한다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">make_batch_and_line</span>(<span class="hljs-params">sku, batch_qty, line_qty</span>):</span>
+    <span class="hljs-keyword">return</span> (
+        Batch(<span class="hljs-string">&quot;batch-001&quot;</span>, sku, batch_qty, eta=date.today()),
+        OrderLine(<span class="hljs-string">&quot;order-123&quot;</span>, sku, line_qty)
     )
 
-def test_can_allocate_if_available_greater_than_required():
-    large_batch, small_line = make_batch_and_line(&quot;ELEGANT-LAMP&quot;, 20, 2)
-    assert large_batch.can_allocate(small_line)
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_can_allocate_if_available_greater_than_required</span>():</span>
+    large_batch, small_line = make_batch_and_line(<span class="hljs-string">&quot;ELEGANT-LAMP&quot;</span>, <span class="hljs-number">20</span>, <span class="hljs-number">2</span>)
+    <span class="hljs-keyword">assert</span> large_batch.can_allocate(small_line)
 
 
-def test_cannot_allocate_if_available_smaller_than_required():
-    small_batch, large_line = make_batch_and_line(&quot;ELEGANT-LAMP&quot;, 2, 20)
-    assert small_batch.can_allocate(large_line) is False
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_cannot_allocate_if_available_smaller_than_required</span>():</span>
+    small_batch, large_line = make_batch_and_line(<span class="hljs-string">&quot;ELEGANT-LAMP&quot;</span>, <span class="hljs-number">2</span>, <span class="hljs-number">20</span>)
+    <span class="hljs-keyword">assert</span> small_batch.can_allocate(large_line) <span class="hljs-keyword">is</span> <span class="hljs-literal">False</span>
 
 
-def test_can_allocate_if_available_equal_to_required():
-    batch, line = make_batch_and_line(&quot;ELEGANT-LAMP&quot;, 2, 2)
-    assert batch.can_allocate(line)
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_can_allocate_if_available_equal_to_required</span>():</span>
+    batch, line = make_batch_and_line(<span class="hljs-string">&quot;ELEGANT-LAMP&quot;</span>, <span class="hljs-number">2</span>, <span class="hljs-number">2</span>)
+    <span class="hljs-keyword">assert</span> batch.can_allocate(line)
 
 
-def test_cannot_allocate_if_skus_do_not_match():
-    batch = Batch(&quot;batch-001&quot;, &quot;UNCOMFORTABLE-CHAIR&quot;, 100, eta=None)
-    different_sku_line = OrderLine(&quot;order-123&quot;, &quot;EXPENSIVE-TOASTER&quot;, 10)
-    assert batch.can_allocate(different_sku_line) is False
-</code></pre><ul>
-<li><p>실패를 확인하고 <code>can_allocate</code> 메소드를 구현한다.</p>
-<pre><code class="lang-python">  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">can_allocate</span>(<span class="hljs-params">self, line: OrderLine</span>):</span>
-      <span class="hljs-keyword">return</span> self.sku == line.sku <span class="hljs-keyword">and</span> self.available_quantity &gt;= line.qty
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_cannot_allocate_if_skus_do_not_match</span>():</span>
+    batch = Batch(<span class="hljs-string">&quot;batch-001&quot;</span>, <span class="hljs-string">&quot;UNCOMFORTABLE-CHAIR&quot;</span>, <span class="hljs-number">100</span>, eta=<span class="hljs-literal">None</span>)
+    different_sku_line = OrderLine(<span class="hljs-string">&quot;order-123&quot;</span>, <span class="hljs-string">&quot;EXPENSIVE-TOASTER&quot;</span>, <span class="hljs-number">10</span>)
+    <span class="hljs-keyword">assert</span> batch.can_allocate(different_sku_line) <span class="hljs-keyword">is</span> <span class="hljs-literal">False</span>
 </code></pre>
-</li>
-<li><p><code>deallocate</code> 할 수 있다면 어떨까?</p>
+<ul>
+<li>실패를 확인하고 <code>can_allocate</code> 메소드를 구현한다.</li>
+</ul>
+<pre><code class="lang-python">    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">can_allocate</span>(<span class="hljs-params">self, line: OrderLine</span>):</span>
+        <span class="hljs-keyword">return</span> self.sku == line.sku <span class="hljs-keyword">and</span> self.available_quantity &gt;= line.qty
+</code></pre>
+<ul>
+<li><code>deallocate</code> 할 수 있다면 어떨까?</li>
+</ul>
 <pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_can_only_deallocate_allocated_lines</span>():</span>
-  batch, unallocated_line = make_batch_and_line(<span class="hljs-string">&quot;DECORATIVE-TRINKET&quot;</span>, <span class="hljs-number">20</span>, <span class="hljs-number">2</span>)
-  batch.deallocate(unallocated_line)
-  <span class="hljs-keyword">assert</span> batch.available_quantity == <span class="hljs-number">20</span>
+    batch, unallocated_line = make_batch_and_line(<span class="hljs-string">&quot;DECORATIVE-TRINKET&quot;</span>, <span class="hljs-number">20</span>, <span class="hljs-number">2</span>)
+    batch.deallocate(unallocated_line)
+    <span class="hljs-keyword">assert</span> batch.available_quantity == <span class="hljs-number">20</span>
 </code></pre>
-</li>
-<li><p>기존 할당된 line 을 기억하고 있어야한다</p>
+<ul>
+<li>기존 할당된 line 을 기억하고 있어야한다</li>
+</ul>
 <pre><code class="lang-python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Batch</span>:</span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, ref: <span class="hljs-built_in">str</span>, sku: <span class="hljs-built_in">str</span>, qty: <span class="hljs-built_in">int</span>, eta: <span class="hljs-type">Optional</span>[date]</span>):</span>
-      self.reference = ref
-      self.sku = sku
-      self.eta = eta
-      self._purchased_quantity = qty
-      self._allocations = <span class="hljs-built_in">set</span>()
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, ref: <span class="hljs-built_in">str</span>, sku: <span class="hljs-built_in">str</span>, qty: <span class="hljs-built_in">int</span>, eta: <span class="hljs-type">Optional</span>[date]</span>):</span>
+        self.reference = ref
+        self.sku = sku
+        self.eta = eta
+        self._purchased_quantity = qty
+        self._allocations = <span class="hljs-built_in">set</span>()
 
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate</span>(<span class="hljs-params">self, line: OrderLine</span>):</span>
-      <span class="hljs-keyword">if</span> self.can_allocate(line):
-          self._allocations.add(line)
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate</span>(<span class="hljs-params">self, line: OrderLine</span>):</span>
+        <span class="hljs-keyword">if</span> self.can_allocate(line):
+            self._allocations.add(line)
 
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">deallocate</span>(<span class="hljs-params">self, line</span>):</span>
-      <span class="hljs-keyword">if</span> line <span class="hljs-keyword">in</span> self._allocations:
-          self._allocations.remove(line)
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">deallocate</span>(<span class="hljs-params">self, line</span>):</span>
+        <span class="hljs-keyword">if</span> line <span class="hljs-keyword">in</span> self._allocations:
+            self._allocations.remove(line)
 
-<span class="hljs-meta">  @property</span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocated_quantity</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">int</span>:</span>
-      <span class="hljs-keyword">return</span> <span class="hljs-built_in">sum</span>(line.qty <span class="hljs-keyword">for</span> line <span class="hljs-keyword">in</span> self._allocations)
+<span class="hljs-meta">    @property</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocated_quantity</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">int</span>:</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-built_in">sum</span>(line.qty <span class="hljs-keyword">for</span> line <span class="hljs-keyword">in</span> self._allocations)
 
-<span class="hljs-meta">  @property</span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">available_quantity</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">int</span>:</span>
-      <span class="hljs-keyword">return</span> self._purchased_quantity - self.allocated_quantity
+<span class="hljs-meta">    @property</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">available_quantity</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">int</span>:</span>
+        <span class="hljs-keyword">return</span> self._purchased_quantity - self.allocated_quantity
 
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">can_allocate</span>(<span class="hljs-params">self, line: OrderLine</span>):</span>
-      <span class="hljs-keyword">return</span> self.sku == line.sku <span class="hljs-keyword">and</span> self.available_quantity &gt;= line.qty
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">can_allocate</span>(<span class="hljs-params">self, line: OrderLine</span>):</span>
+        <span class="hljs-keyword">return</span> self.sku == line.sku <span class="hljs-keyword">and</span> self.available_quantity &gt;= line.qty
 </code></pre>
-</li>
+<ul>
 <li>이렇게 비지니스 로직을 도메인 모델에 모아 구현할 수 있다.</li>
 </ul>
 <h3 id="엔티티-vs-값-객체">엔티티 vs 값 객체</h3>
@@ -370,62 +376,71 @@ def test_cannot_allocate_if_skus_do_not_match():
 <ul>
 <li>비지니스 로직이 꼭 도메인 객체 메소드로 구현될 필요는 없다.</li>
 <li>엔티티나 값 객체 두기 애매한 비지니스 로직이 있다. 이를 도메인 서비스 함수로 만들 수 있다.</li>
-<li><p>여러 Batch 중 하나를 선택해 <code>allocate</code> 하는 경우 Batch, OrderLine 중 어디에 둘지 애매해진다. 
-```python
-def test_prefers_current_stock_batches_to_shipments():
-  in_stock_batch = Batch(&quot;in-stock-batch&quot;, &quot;RETRO-CLOCK&quot;, 100, eta=None)
-  shipment_batch = Batch(&quot;shipment-batch&quot;, &quot;RETRO-CLOCK&quot;, 100, eta=tomorrow)
-  line = OrderLine(&quot;oref&quot;, &quot;RETRO-CLOCK&quot;, 10)</p>
-<p>  allocate(line, [in_stock_batch, shipment_batch])</p>
-<p>  assert in_stock_batch.available_quantity == 90
-  assert shipment_batch.available_quantity == 100</p>
-</li>
+<li>여러 Batch 중 하나를 선택해 <code>allocate</code> 하는 경우 Batch, OrderLine 중 어디에 둘지 애매해진다. </li>
 </ul>
-<p>def test_prefers_earlier_batches():
-    earliest = Batch(&quot;speedy-batch&quot;, &quot;MINIMALIST-SPOON&quot;, 100, eta=today)
-    medium = Batch(&quot;normal-batch&quot;, &quot;MINIMALIST-SPOON&quot;, 100, eta=tomorrow)
-    latest = Batch(&quot;slow-batch&quot;, &quot;MINIMALIST-SPOON&quot;, 100, eta=later)
-    line = OrderLine(&quot;order1&quot;, &quot;MINIMALIST-SPOON&quot;, 10)</p>
-<pre><code>allocate(line, [medium, earliest, latest])
+<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_prefers_current_stock_batches_to_shipments</span>():</span>
+    in_stock_batch = Batch(<span class="hljs-string">&quot;in-stock-batch&quot;</span>, <span class="hljs-string">&quot;RETRO-CLOCK&quot;</span>, <span class="hljs-number">100</span>, eta=<span class="hljs-literal">None</span>)
+    shipment_batch = Batch(<span class="hljs-string">&quot;shipment-batch&quot;</span>, <span class="hljs-string">&quot;RETRO-CLOCK&quot;</span>, <span class="hljs-number">100</span>, eta=tomorrow)
+    line = OrderLine(<span class="hljs-string">&quot;oref&quot;</span>, <span class="hljs-string">&quot;RETRO-CLOCK&quot;</span>, <span class="hljs-number">10</span>)
 
-assert earliest.available_quantity == 90
-assert medium.available_quantity == 100
-assert latest.available_quantity == 100
-</code></pre><p>def test_returns_allocated_batch_ref():
-    in_stock_batch = Batch(&quot;in-stock-batch-ref&quot;, &quot;HIGHBROW-POSTER&quot;, 100, eta=None)
-    shipment_batch = Batch(&quot;shipment-batch-ref&quot;, &quot;HIGHBROW-POSTER&quot;, 100, eta=tomorrow)
-    line = OrderLine(&quot;oref&quot;, &quot;HIGHBROW-POSTER&quot;, 10)
+    allocate(line, [in_stock_batch, shipment_batch])
+
+    <span class="hljs-keyword">assert</span> in_stock_batch.available_quantity == <span class="hljs-number">90</span>
+    <span class="hljs-keyword">assert</span> shipment_batch.available_quantity == <span class="hljs-number">100</span>
+
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_prefers_earlier_batches</span>():</span>
+    earliest = Batch(<span class="hljs-string">&quot;speedy-batch&quot;</span>, <span class="hljs-string">&quot;MINIMALIST-SPOON&quot;</span>, <span class="hljs-number">100</span>, eta=today)
+    medium = Batch(<span class="hljs-string">&quot;normal-batch&quot;</span>, <span class="hljs-string">&quot;MINIMALIST-SPOON&quot;</span>, <span class="hljs-number">100</span>, eta=tomorrow)
+    latest = Batch(<span class="hljs-string">&quot;slow-batch&quot;</span>, <span class="hljs-string">&quot;MINIMALIST-SPOON&quot;</span>, <span class="hljs-number">100</span>, eta=later)
+    line = OrderLine(<span class="hljs-string">&quot;order1&quot;</span>, <span class="hljs-string">&quot;MINIMALIST-SPOON&quot;</span>, <span class="hljs-number">10</span>)
+
+    allocate(line, [medium, earliest, latest])
+
+    <span class="hljs-keyword">assert</span> earliest.available_quantity == <span class="hljs-number">90</span>
+    <span class="hljs-keyword">assert</span> medium.available_quantity == <span class="hljs-number">100</span>
+    <span class="hljs-keyword">assert</span> latest.available_quantity == <span class="hljs-number">100</span>
+
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_returns_allocated_batch_ref</span>():</span>
+    in_stock_batch = Batch(<span class="hljs-string">&quot;in-stock-batch-ref&quot;</span>, <span class="hljs-string">&quot;HIGHBROW-POSTER&quot;</span>, <span class="hljs-number">100</span>, eta=<span class="hljs-literal">None</span>)
+    shipment_batch = Batch(<span class="hljs-string">&quot;shipment-batch-ref&quot;</span>, <span class="hljs-string">&quot;HIGHBROW-POSTER&quot;</span>, <span class="hljs-number">100</span>, eta=tomorrow)
+    line = OrderLine(<span class="hljs-string">&quot;oref&quot;</span>, <span class="hljs-string">&quot;HIGHBROW-POSTER&quot;</span>, <span class="hljs-number">10</span>)
     allocation = allocate(line, [in_stock_batch, shipment_batch])
-    assert allocation == in_stock_batch.reference</p>
-<pre><code>- 이 경우 새롭게 서비스 함수를 만들면 좋다.
-```python
-def allocate(line: OrderLine, batches: List[Batch]) -&gt; str:
-    batch = next(b for b in sorted(batches) if b.can_allocate(line))
+    <span class="hljs-keyword">assert</span> allocation == in_stock_batch.reference
+</code></pre>
+<ul>
+<li>이 경우 새롭게 서비스 함수를 만들면 좋다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate</span>(<span class="hljs-params">line: OrderLine, batches: <span class="hljs-type">List</span>[Batch]</span>) -&gt; <span class="hljs-built_in">str</span>:</span>
+    batch = <span class="hljs-built_in">next</span>(b <span class="hljs-keyword">for</span> b <span class="hljs-keyword">in</span> <span class="hljs-built_in">sorted</span>(batches) <span class="hljs-keyword">if</span> b.can_allocate(line))
     batch.allocate(line)
-    return batch.reference
-</code></pre><h3 id="예외와-도메인-개념">예외와 도메인 개념</h3>
+    <span class="hljs-keyword">return</span> batch.reference
+</code></pre>
+<h3 id="예외와-도메인-개념">예외와 도메인 개념</h3>
 <ul>
 <li>예외로 도메인 개념을 표현할 수 있다.</li>
 <li>예를 들면 <code>allocate</code>시 품절 개념을 예외로 표현할 수 있다.</li>
-<li><p>역시 테스트 코드부터 작성한다.</p>
-<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_raises_out_of_stock_exception_if_cannot_allocate</span>():</span>
-  batch = Batch(<span class="hljs-string">&quot;batch1&quot;</span>, <span class="hljs-string">&quot;SMALL-FORK&quot;</span>, <span class="hljs-number">10</span>, eta=today)
-  allocate(OrderLine(<span class="hljs-string">&quot;order1&quot;</span>, <span class="hljs-string">&quot;SMALL-FORK&quot;</span>, <span class="hljs-number">10</span>), [batch])
-
-  <span class="hljs-keyword">with</span> pytest.raises(OutOfStock, match=<span class="hljs-string">&quot;SMALL-FORK&quot;</span>):
-      allocate(OrderLine(<span class="hljs-string">&quot;order2&quot;</span>, <span class="hljs-string">&quot;SMALL-FORK&quot;</span>, <span class="hljs-number">1</span>), [batch])
-</code></pre>
-</li>
-<li>그리고 구현한다. Batch 를 찾지못할 시 <code>OutOfStock</code> 예외를 발생시킨다.<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate</span>(<span class="hljs-params">line: OrderLine, batches: <span class="hljs-type">List</span>[Batch]</span>) -&gt; <span class="hljs-built_in">str</span>:</span>
-  <span class="hljs-keyword">try</span>:
-      batch = <span class="hljs-built_in">next</span>(b <span class="hljs-keyword">for</span> b <span class="hljs-keyword">in</span> <span class="hljs-built_in">sorted</span>(batches) <span class="hljs-keyword">if</span> b.can_allocate(line))
-      batch.allocate(line)
-      <span class="hljs-keyword">return</span> batch.reference
-  <span class="hljs-keyword">except</span> StopIteration:
-      <span class="hljs-keyword">raise</span> OutOfStock(<span class="hljs-string">f&quot;Out of stock for sku <span class="hljs-subst">{line.sku}</span>&quot;</span>)
-</code></pre>
-</li>
+<li>역시 테스트 코드부터 작성한다.</li>
 </ul>
+<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_raises_out_of_stock_exception_if_cannot_allocate</span>():</span>
+    batch = Batch(<span class="hljs-string">&quot;batch1&quot;</span>, <span class="hljs-string">&quot;SMALL-FORK&quot;</span>, <span class="hljs-number">10</span>, eta=today)
+    allocate(OrderLine(<span class="hljs-string">&quot;order1&quot;</span>, <span class="hljs-string">&quot;SMALL-FORK&quot;</span>, <span class="hljs-number">10</span>), [batch])
+
+    <span class="hljs-keyword">with</span> pytest.raises(OutOfStock, match=<span class="hljs-string">&quot;SMALL-FORK&quot;</span>):
+        allocate(OrderLine(<span class="hljs-string">&quot;order2&quot;</span>, <span class="hljs-string">&quot;SMALL-FORK&quot;</span>, <span class="hljs-number">1</span>), [batch])
+</code></pre>
+<ul>
+<li>그리고 구현한다. Batch 를 찾지못할 시 <code>OutOfStock</code> 예외를 발생시킨다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate</span>(<span class="hljs-params">line: OrderLine, batches: <span class="hljs-type">List</span>[Batch]</span>) -&gt; <span class="hljs-built_in">str</span>:</span>
+    <span class="hljs-keyword">try</span>:
+        batch = <span class="hljs-built_in">next</span>(b <span class="hljs-keyword">for</span> b <span class="hljs-keyword">in</span> <span class="hljs-built_in">sorted</span>(batches) <span class="hljs-keyword">if</span> b.can_allocate(line))
+        batch.allocate(line)
+        <span class="hljs-keyword">return</span> batch.reference
+    <span class="hljs-keyword">except</span> StopIteration:
+        <span class="hljs-keyword">raise</span> OutOfStock(<span class="hljs-string">f&quot;Out of stock for sku <span class="hljs-subst">{line.sku}</span>&quot;</span>)
+</code></pre>
 
                                 
                                 </section>
@@ -469,7 +484,7 @@ def allocate(line: OrderLine, batches: List[Batch]) -&gt; str:
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Chapter 1. 도메인 모델링","level":"2.1","depth":1,"next":{"title":"Chapter 2. 저장소 패턴","level":"2.2","depth":1,"path":"chapter2/README.md","ref":"chapter2/README.md","articles":[]},"previous":{"title":"Chapter 0. 도입","level":"1.2","depth":1,"path":"chapter0/README.md","ref":"chapter0/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter1/README.md","mtime":"2021-08-14T15:00:22.615Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-14T15:00:30.554Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Chapter 1. 도메인 모델링","level":"2.1","depth":1,"next":{"title":"Chapter 2. 저장소 패턴","level":"2.2","depth":1,"path":"chapter2/README.md","ref":"chapter2/README.md","articles":[]},"previous":{"title":"Chapter 0. 도입","level":"1.2","depth":1,"path":"chapter0/README.md","ref":"chapter0/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter1/README.md","mtime":"2021-08-14T15:09:24.320Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-14T15:09:30.289Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>

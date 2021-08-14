@@ -221,94 +221,101 @@
                                 <h2 id="저장소-패턴">저장소 패턴</h2>
 <h3 id="도메인-모델-영속화">도메인 모델 영속화</h3>
 <ul>
-<li>기능 개발을 위해 도메인 모델을 데이터베이스든 어디든 영속화할 방법이 필요하다. <pre><code class="lang-python"><span class="hljs-meta">@flask.route.gubbins</span>
-<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate_endpoint</span>():</span>
-  <span class="hljs-comment"># 요청으로부터 주문 라인 추출</span>
-  line = OrderLine(reuquest.params, ...)
-  <span class="hljs-comment"># DB에서 모든 배치 가져오기</span>
-  batches = ...
-  <span class="hljs-comment"># 도메인 서비스 호출</span>
-  allocate(line, batches)
-  <span class="hljs-comment"># 어떤 방식으로든 할당한 배치를 다시 데이터베이스에 저장</span>
-  <span class="hljs-keyword">return</span> <span class="hljs-number">201</span>
-</code></pre>
-</li>
+<li>기능 개발을 위해 도메인 모델을 데이터베이스든 어디든 영속화할 방법이 필요하다. </li>
 </ul>
+<pre><code class="lang-python"><span class="hljs-meta">@flask.route.gubbins</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate_endpoint</span>():</span>
+    <span class="hljs-comment"># 요청으로부터 주문 라인 추출</span>
+    line = OrderLine(reuquest.params, ...)
+    <span class="hljs-comment"># DB에서 모든 배치 가져오기</span>
+    batches = ...
+    <span class="hljs-comment"># 도메인 서비스 호출</span>
+    allocate(line, batches)
+    <span class="hljs-comment"># 어떤 방식으로든 할당한 배치를 다시 데이터베이스에 저장</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-number">201</span>
+</code></pre>
 <h3 id="일반적인-orm">일반적인 ORM</h3>
 <ul>
 <li>보통 많이 사용되는 패턴이다.</li>
-<li>도메인 모델이 ORM 에 의존하는 치명적인 단점을 가진다.
-```python
-from sqlalchemy import Column, ForeignKey, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship</li>
+<li>도메인 모델이 ORM 에 의존하는 치명적인 단점을 가진다.</li>
 </ul>
-<p>Base = declarative_base()</p>
-<p>class Order(Base):
-    id = Column(Integer, primary_key=True)</p>
-<p>class OrderLine(Base):
-    id = Column(Integer, primary_key=True)
-    sku = Column(String(250))
-    qty = Integer(String(250))
-    order_id = Column(Integer, ForeignKey(&apos;order.id&apos;))
-    order = relationship(Order)</p>
-<p>class Allocation(Base):
-    ...</p>
-<pre><code>
-### 순수한 도메인 유지하는 ORM
-- 도메인 모델은 ORM 을 모르는 것이 좋다.
-- 매퍼를 정의하면 의존성을 없앨 수 있다.
-- 다만 도메인 모델에 변경이 생기면 매퍼 변경이 필요하다.
-  - 새로운 결정을 할 때는 트레이드오프를 생각해야한다.
-  - 종종 정석보다는 실용적인 이유로 선택을 포기하기도 한다.
-```python
-from sqlalchemy import Table, MetaData, Column, Integer, String, Date, ForeignKey
-from sqlalchemy.orm import mapper, relationship
+<pre><code class="lang-python"><span class="hljs-keyword">from</span> sqlalchemy <span class="hljs-keyword">import</span> Column, ForeignKey, Integer, String
+<span class="hljs-keyword">from</span> sqlalchemy.ext.declarative <span class="hljs-keyword">import</span> declarative_base
+<span class="hljs-keyword">from</span> sqlalchemy.orm <span class="hljs-keyword">import</span> relationship
 
-import model
+Base = declarative_base()
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Order</span>(<span class="hljs-params">Base</span>):</span>
+    <span class="hljs-built_in">id</span> = Column(Integer, primary_key=<span class="hljs-literal">True</span>)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">OrderLine</span>(<span class="hljs-params">Base</span>):</span>
+    <span class="hljs-built_in">id</span> = Column(Integer, primary_key=<span class="hljs-literal">True</span>)
+    sku = Column(String(<span class="hljs-number">250</span>))
+    qty = Integer(String(<span class="hljs-number">250</span>))
+    order_id = Column(Integer, ForeignKey(<span class="hljs-string">&apos;order.id&apos;</span>))
+    order = relationship(Order)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Allocation</span>(<span class="hljs-params">Base</span>):</span>
+    ...
+</code></pre>
+<h3 id="순수한-도메인-유지하는-orm">순수한 도메인 유지하는 ORM</h3>
+<ul>
+<li>도메인 모델은 ORM 을 모르는 것이 좋다.</li>
+<li>매퍼를 정의하면 의존성을 없앨 수 있다.</li>
+<li>다만 도메인 모델에 변경이 생기면 매퍼 변경이 필요하다.<ul>
+<li>새로운 결정을 할 때는 트레이드오프를 생각해야한다.</li>
+<li>종종 정석보다는 실용적인 이유로 선택을 포기하기도 한다.</li>
+</ul>
+</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-keyword">from</span> sqlalchemy <span class="hljs-keyword">import</span> Table, MetaData, Column, Integer, String, Date, ForeignKey
+<span class="hljs-keyword">from</span> sqlalchemy.orm <span class="hljs-keyword">import</span> mapper, relationship
+
+<span class="hljs-keyword">import</span> model
 
 metadata = MetaData()
 
 order_lines = Table(
-    &quot;order_lines&quot;,
+    <span class="hljs-string">&quot;order_lines&quot;</span>,
     metadata,
-    Column(&quot;id&quot;, Integer, primary_key=True, autoincrement=True),
-    Column(&quot;sku&quot;, String(255)),
-    Column(&quot;qty&quot;, Integer, nullable=False),
-    Column(&quot;orderid&quot;, String(255)),
+    Column(<span class="hljs-string">&quot;id&quot;</span>, Integer, primary_key=<span class="hljs-literal">True</span>, autoincrement=<span class="hljs-literal">True</span>),
+    Column(<span class="hljs-string">&quot;sku&quot;</span>, String(<span class="hljs-number">255</span>)),
+    Column(<span class="hljs-string">&quot;qty&quot;</span>, Integer, nullable=<span class="hljs-literal">False</span>),
+    Column(<span class="hljs-string">&quot;orderid&quot;</span>, String(<span class="hljs-number">255</span>)),
 )
 
 batches = Table(
-    &quot;batches&quot;,
+    <span class="hljs-string">&quot;batches&quot;</span>,
     metadata,
-    Column(&quot;id&quot;, Integer, primary_key=True, autoincrement=True),
-    Column(&quot;reference&quot;, String(255)),
-    Column(&quot;sku&quot;, String(255)),
-    Column(&quot;_purchased_quantity&quot;, Integer, nullable=False),
-    Column(&quot;eta&quot;, Date, nullable=True),
+    Column(<span class="hljs-string">&quot;id&quot;</span>, Integer, primary_key=<span class="hljs-literal">True</span>, autoincrement=<span class="hljs-literal">True</span>),
+    Column(<span class="hljs-string">&quot;reference&quot;</span>, String(<span class="hljs-number">255</span>)),
+    Column(<span class="hljs-string">&quot;sku&quot;</span>, String(<span class="hljs-number">255</span>)),
+    Column(<span class="hljs-string">&quot;_purchased_quantity&quot;</span>, Integer, nullable=<span class="hljs-literal">False</span>),
+    Column(<span class="hljs-string">&quot;eta&quot;</span>, Date, nullable=<span class="hljs-literal">True</span>),
 )
 
 allocations = Table(
-    &quot;allocations&quot;,
+    <span class="hljs-string">&quot;allocations&quot;</span>,
     metadata,
-    Column(&quot;id&quot;, Integer, primary_key=True, autoincrement=True),
-    Column(&quot;orderline_id&quot;, ForeignKey(&quot;order_lines.id&quot;)),
-    Column(&quot;batch_id&quot;, ForeignKey(&quot;batches.id&quot;)),
+    Column(<span class="hljs-string">&quot;id&quot;</span>, Integer, primary_key=<span class="hljs-literal">True</span>, autoincrement=<span class="hljs-literal">True</span>),
+    Column(<span class="hljs-string">&quot;orderline_id&quot;</span>, ForeignKey(<span class="hljs-string">&quot;order_lines.id&quot;</span>)),
+    Column(<span class="hljs-string">&quot;batch_id&quot;</span>, ForeignKey(<span class="hljs-string">&quot;batches.id&quot;</span>)),
 )
 
 
-def start_mappers():
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">start_mappers</span>():</span>
     lines_mapper = mapper(model.OrderLine, order_lines)
     mapper(
         model.Batch,
         batches,
         properties={
-            &quot;_allocations&quot;: relationship(
-                lines_mapper, secondary=allocations, collection_class=set,
+            <span class="hljs-string">&quot;_allocations&quot;</span>: relationship(
+                lines_mapper, secondary=allocations, collection_class=<span class="hljs-built_in">set</span>,
             )
         },
     )
-</code></pre><h3 id="dip-추상화한-저장소">DIP (추상화한 저장소)</h3>
+</code></pre>
+<h3 id="dip-추상화한-저장소">DIP (추상화한 저장소)</h3>
 <ul>
 <li>0장에서 계층화로 기분, 각 계층에서 접근할 수 있는 계층을 한정한다고 했다.<ul>
 <li>표현 계층 -&gt; 비지니스 계층 -&gt; 데이터베이스 계층</li>
@@ -330,41 +337,39 @@ def start_mappers():
 </code></pre>
 <h4 id="실제-저장소">실제 저장소</h4>
 <ul>
-<li><p>Production 에서 사용할 저장소를 <code>AbstractRepository</code>를 상속해 구현할 수 있다. </p>
-<pre><code class="lang-python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SqlAlchemyRepository</span>(<span class="hljs-params">AbstractRepository</span>):</span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, session</span>):</span>
-      self.session = session
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">add</span>(<span class="hljs-params">self, batch</span>):</span>
-      self.session.add(batch)
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get</span>(<span class="hljs-params">self, reference</span>):</span>
-      <span class="hljs-keyword">return</span> self.session.query(model.Batch).filter_by(reference=reference).one()
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">list</span>(<span class="hljs-params">self</span>):</span>
-      <span class="hljs-keyword">return</span> self.session.query(model.Batch).<span class="hljs-built_in">all</span>()
-</code></pre>
-</li>
+<li>Production 에서 사용할 저장소를 <code>AbstractRepository</code>를 상속해 구현할 수 있다. </li>
 </ul>
+<pre><code class="lang-python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SqlAlchemyRepository</span>(<span class="hljs-params">AbstractRepository</span>):</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, session</span>):</span>
+        self.session = session
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">add</span>(<span class="hljs-params">self, batch</span>):</span>
+        self.session.add(batch)
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get</span>(<span class="hljs-params">self, reference</span>):</span>
+        <span class="hljs-keyword">return</span> self.session.query(model.Batch).filter_by(reference=reference).one()
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">list</span>(<span class="hljs-params">self</span>):</span>
+        <span class="hljs-keyword">return</span> self.session.query(model.Batch).<span class="hljs-built_in">all</span>()
+</code></pre>
 <h4 id="테스트를-위한-가짜-저장소">테스트를 위한 가짜 저장소</h4>
 <ul>
 <li>비지니스 계층 테스트를 위해 가짜 저장소를 만들 수 있다.</li>
-<li><p>추상화를 하면서 얻는 가장 큰 이점이다.</p>
-<pre><code class="lang-python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FakeRepository</span>(<span class="hljs-params">AbstractRepository</span>):</span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, batches</span>):</span>
-      self._batches = <span class="hljs-built_in">set</span>(batches)
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">add</span>(<span class="hljs-params">self, batch</span>):</span>
-      self._batches.add(batch)
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get</span>(<span class="hljs-params">self, reference</span>):</span>
-      <span class="hljs-keyword">return</span> <span class="hljs-built_in">next</span>(b <span class="hljs-keyword">for</span> b <span class="hljs-keyword">in</span> self._batches <span class="hljs-keyword">if</span> b.reference == reference)
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">list</span>(<span class="hljs-params">self</span>):</span>
-      <span class="hljs-keyword">return</span> <span class="hljs-built_in">list</span>(self._batches)
-</code></pre>
-</li>
+<li>추상화를 하면서 얻는 가장 큰 이점이다.</li>
 </ul>
+<pre><code class="lang-python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FakeRepository</span>(<span class="hljs-params">AbstractRepository</span>):</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, batches</span>):</span>
+        self._batches = <span class="hljs-built_in">set</span>(batches)
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">add</span>(<span class="hljs-params">self, batch</span>):</span>
+        self._batches.add(batch)
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get</span>(<span class="hljs-params">self, reference</span>):</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-built_in">next</span>(b <span class="hljs-keyword">for</span> b <span class="hljs-keyword">in</span> self._batches <span class="hljs-keyword">if</span> b.reference == reference)
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">list</span>(<span class="hljs-params">self</span>):</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-built_in">list</span>(self._batches)
+</code></pre>
 <h3 id="트레이드오프">트레이드오프</h3>
 <ul>
 <li>어떤 도입에는 장/단이 있다.</li>
@@ -422,7 +427,7 @@ def start_mappers():
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Chapter 2. 저장소 패턴","level":"2.2","depth":1,"next":{"title":"Chapter 3. 막간: 결합과 추상화","level":"2.3","depth":1,"path":"chapter3/README.md","ref":"chapter3/README.md","articles":[]},"previous":{"title":"Chapter 1. 도메인 모델링","level":"2.1","depth":1,"path":"chapter1/README.md","ref":"chapter1/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter2/README.md","mtime":"2021-08-14T15:00:22.615Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-14T15:00:30.554Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Chapter 2. 저장소 패턴","level":"2.2","depth":1,"next":{"title":"Chapter 3. 막간: 결합과 추상화","level":"2.3","depth":1,"path":"chapter3/README.md","ref":"chapter3/README.md","articles":[]},"previous":{"title":"Chapter 1. 도메인 모델링","level":"2.1","depth":1,"path":"chapter1/README.md","ref":"chapter1/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter2/README.md","mtime":"2021-08-14T15:09:24.324Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-14T15:09:30.289Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>
