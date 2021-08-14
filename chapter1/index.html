@@ -1,0 +1,548 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <title>Chapter 1. 도메인 모델링 · HonKit</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="HonKit 3.6.20">
+        
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="../chapter2/" />
+    
+    
+    <link rel="prev" href="../chapter0/" />
+    
+
+    </head>
+    <body>
+        
+<div class="book honkit-cloak">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="../">
+            
+                <a href="../">
+            
+                    
+                    이 문서에 대해
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="../chapter0/">
+            
+                <a href="../chapter0/">
+            
+                    
+                    Chapter 0. 도입
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">Part 1. 도메인 모델링을 지원하는 아키텍처 구축</li>
+        
+        
+    
+        <li class="chapter active" data-level="2.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Chapter 1. 도메인 모델링
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.2" data-path="../chapter2/">
+            
+                <a href="../chapter2/">
+            
+                    
+                    Chapter 2. 저장소 패턴
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.3" data-path="../chapter3/">
+            
+                <a href="../chapter3/">
+            
+                    
+                    Chapter 3. 막간: 결합과 추상화
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.4" data-path="../chapter4/">
+            
+                <a href="../chapter4/">
+            
+                    
+                    Chapter 4. 서비스 계층
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://github.com/honkit/honkit" target="blank" class="gitbook-link">
+            Published with HonKit
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href=".." >Chapter 1. 도메인 모델링</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h2 id="도메인-모델링">도메인 모델링</h2>
+<ul>
+<li>도메인 모델은 특정 영역/문제를 표현한 개념 모델이다.<ul>
+<li>e.g. 가구 판매회사에서 <code>구매 및 조달</code>, <code>제품 설계</code>, <code>물류 및 배달</code>이 도메인이 될 수 있다.</li>
+</ul>
+</li>
+<li>도메인 모델에 비지니스 로직을 모아 비지니스 로직이 여러 곳에 퍼지는 것을 막을 수 있다. </li>
+<li>비니지스 용어에서 모델링을 하면 다른 팀과 대화할 때 편해진다.</li>
+</ul>
+<h3 id="단위테스트">단위테스트</h3>
+<ul>
+<li>도메인 모델 코드를 바로 작성하지 않고 테스트부터 작성한다. (TDD)</li>
+<li><p>포인트는 비지니스 영역에 있는 용어들을 가져와 작성한다.</p>
+<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_allocating_to_a_batch_reduces_the_available_quantity</span>():</span>
+  <span class="hljs-comment"># given</span>
+  batch = Batch(<span class="hljs-string">&quot;batch-001&quot;</span>, <span class="hljs-string">&quot;SMALL-TABLE&quot;</span>, qty=<span class="hljs-number">20</span>, eta=date.today())
+  line = OrderLine(<span class="hljs-string">&apos;order-ref&apos;</span>, <span class="hljs-string">&quot;SMALL-TABLE&quot;</span>, <span class="hljs-number">2</span>)
+
+  <span class="hljs-comment"># when</span>
+  batch.allocate(line)
+
+  <span class="hljs-comment"># then</span>
+  <span class="hljs-keyword">assert</span> batch.available_quantity == <span class="hljs-number">18</span>
+</code></pre>
+</li>
+<li><p>위 테스트가 통과할 수 있도록 도메인 모델을 작성한다.
+```python
+@dataclass(frozen=True)
+class OrderLine:
+  orderid: str
+  sku: str
+  qty: int</p>
+</li>
+</ul>
+<p>class Batch:
+    def <strong>init</strong>(self, ref: str, sku: str, qty: int, eta: Optional[date]):
+        self.reference = ref
+        self.sku = sku
+        self.eta = eta
+        self.available_quantity = qty</p>
+<pre><code>def allocate(self, line: OrderLine):
+    self.available_quantity -= line.qty
+</code></pre><pre><code>
+- 이어서 `can_allocate` 메소드에 대해 테스트 코드를 작성한다.
+```python
+def make_batch_and_line(sku, batch_qty, line_qty):
+    return (
+        Batch(&quot;batch-001&quot;, sku, batch_qty, eta=date.today()),
+        OrderLine(&quot;order-123&quot;, sku, line_qty)
+    )
+
+def test_can_allocate_if_available_greater_than_required():
+    large_batch, small_line = make_batch_and_line(&quot;ELEGANT-LAMP&quot;, 20, 2)
+    assert large_batch.can_allocate(small_line)
+
+
+def test_cannot_allocate_if_available_smaller_than_required():
+    small_batch, large_line = make_batch_and_line(&quot;ELEGANT-LAMP&quot;, 2, 20)
+    assert small_batch.can_allocate(large_line) is False
+
+
+def test_can_allocate_if_available_equal_to_required():
+    batch, line = make_batch_and_line(&quot;ELEGANT-LAMP&quot;, 2, 2)
+    assert batch.can_allocate(line)
+
+
+def test_cannot_allocate_if_skus_do_not_match():
+    batch = Batch(&quot;batch-001&quot;, &quot;UNCOMFORTABLE-CHAIR&quot;, 100, eta=None)
+    different_sku_line = OrderLine(&quot;order-123&quot;, &quot;EXPENSIVE-TOASTER&quot;, 10)
+    assert batch.can_allocate(different_sku_line) is False
+</code></pre><ul>
+<li><p>실패를 확인하고 <code>can_allocate</code> 메소드를 구현한다.</p>
+<pre><code class="lang-python">  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">can_allocate</span>(<span class="hljs-params">self, line: OrderLine</span>):</span>
+      <span class="hljs-keyword">return</span> self.sku == line.sku <span class="hljs-keyword">and</span> self.available_quantity &gt;= line.qty
+</code></pre>
+</li>
+<li><p><code>deallocate</code> 할 수 있다면 어떨까?</p>
+<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_can_only_deallocate_allocated_lines</span>():</span>
+  batch, unallocated_line = make_batch_and_line(<span class="hljs-string">&quot;DECORATIVE-TRINKET&quot;</span>, <span class="hljs-number">20</span>, <span class="hljs-number">2</span>)
+  batch.deallocate(unallocated_line)
+  <span class="hljs-keyword">assert</span> batch.available_quantity == <span class="hljs-number">20</span>
+</code></pre>
+</li>
+<li><p>기존 할당된 line 을 기억하고 있어야한다</p>
+<pre><code class="lang-python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Batch</span>:</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, ref: <span class="hljs-built_in">str</span>, sku: <span class="hljs-built_in">str</span>, qty: <span class="hljs-built_in">int</span>, eta: <span class="hljs-type">Optional</span>[date]</span>):</span>
+      self.reference = ref
+      self.sku = sku
+      self.eta = eta
+      self._purchased_quantity = qty
+      self._allocations = <span class="hljs-built_in">set</span>()
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate</span>(<span class="hljs-params">self, line: OrderLine</span>):</span>
+      <span class="hljs-keyword">if</span> self.can_allocate(line):
+          self._allocations.add(line)
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">deallocate</span>(<span class="hljs-params">self, line</span>):</span>
+      <span class="hljs-keyword">if</span> line <span class="hljs-keyword">in</span> self._allocations:
+          self._allocations.remove(line)
+
+<span class="hljs-meta">  @property</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocated_quantity</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">int</span>:</span>
+      <span class="hljs-keyword">return</span> <span class="hljs-built_in">sum</span>(line.qty <span class="hljs-keyword">for</span> line <span class="hljs-keyword">in</span> self._allocations)
+
+<span class="hljs-meta">  @property</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">available_quantity</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">int</span>:</span>
+      <span class="hljs-keyword">return</span> self._purchased_quantity - self.allocated_quantity
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">can_allocate</span>(<span class="hljs-params">self, line: OrderLine</span>):</span>
+      <span class="hljs-keyword">return</span> self.sku == line.sku <span class="hljs-keyword">and</span> self.available_quantity &gt;= line.qty
+</code></pre>
+</li>
+<li>이렇게 비지니스 로직을 도메인 모델에 모아 구현할 수 있다.</li>
+</ul>
+<h3 id="엔티티-vs-값-객체">엔티티 vs 값 객체</h3>
+<ul>
+<li>도메인 모델은 엔티티 혹은 값 객체이며 아래와 같은 차이를 가진다.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>-</th>
+<th>엔티티</th>
+<th>값 객체</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>동등성 종류(Type of Equality)</td>
+<td>정체성 동등성(identifier equality)</td>
+<td>값 동등성(value equality)</td>
+</tr>
+<tr>
+<td>변이성(Mutability)</td>
+<td>가능(mutable)</td>
+<td>불가(immutable)</td>
+</tr>
+<tr>
+<td>수명</td>
+<td>생애주기가 존재</td>
+<td>생애주기가 존재하지 않음</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>엔티티는 정체성 동등성로 객체간 ID 비교로 같은지 확인할 수 있다.</li>
+<li>값 객체는 값 동등성으로 객체가 가진 멤버변수를 모두 비교해 같은지 확인할 수 있다.</li>
+</ul>
+<h3 id="도메인-서비스-함수">도메인 서비스 함수</h3>
+<ul>
+<li>비지니스 로직이 꼭 도메인 객체 메소드로 구현될 필요는 없다.</li>
+<li>엔티티나 값 객체 두기 애매한 비지니스 로직이 있다. 이를 도메인 서비스 함수로 만들 수 있다.</li>
+<li><p>여러 Batch 중 하나를 선택해 <code>allocate</code> 하는 경우 Batch, OrderLine 중 어디에 둘지 애매해진다. 
+```python
+def test_prefers_current_stock_batches_to_shipments():
+  in_stock_batch = Batch(&quot;in-stock-batch&quot;, &quot;RETRO-CLOCK&quot;, 100, eta=None)
+  shipment_batch = Batch(&quot;shipment-batch&quot;, &quot;RETRO-CLOCK&quot;, 100, eta=tomorrow)
+  line = OrderLine(&quot;oref&quot;, &quot;RETRO-CLOCK&quot;, 10)</p>
+<p>  allocate(line, [in_stock_batch, shipment_batch])</p>
+<p>  assert in_stock_batch.available_quantity == 90
+  assert shipment_batch.available_quantity == 100</p>
+</li>
+</ul>
+<p>def test_prefers_earlier_batches():
+    earliest = Batch(&quot;speedy-batch&quot;, &quot;MINIMALIST-SPOON&quot;, 100, eta=today)
+    medium = Batch(&quot;normal-batch&quot;, &quot;MINIMALIST-SPOON&quot;, 100, eta=tomorrow)
+    latest = Batch(&quot;slow-batch&quot;, &quot;MINIMALIST-SPOON&quot;, 100, eta=later)
+    line = OrderLine(&quot;order1&quot;, &quot;MINIMALIST-SPOON&quot;, 10)</p>
+<pre><code>allocate(line, [medium, earliest, latest])
+
+assert earliest.available_quantity == 90
+assert medium.available_quantity == 100
+assert latest.available_quantity == 100
+</code></pre><p>def test_returns_allocated_batch_ref():
+    in_stock_batch = Batch(&quot;in-stock-batch-ref&quot;, &quot;HIGHBROW-POSTER&quot;, 100, eta=None)
+    shipment_batch = Batch(&quot;shipment-batch-ref&quot;, &quot;HIGHBROW-POSTER&quot;, 100, eta=tomorrow)
+    line = OrderLine(&quot;oref&quot;, &quot;HIGHBROW-POSTER&quot;, 10)
+    allocation = allocate(line, [in_stock_batch, shipment_batch])
+    assert allocation == in_stock_batch.reference</p>
+<pre><code>- 이 경우 새롭게 서비스 함수를 만들면 좋다.
+```python
+def allocate(line: OrderLine, batches: List[Batch]) -&gt; str:
+    batch = next(b for b in sorted(batches) if b.can_allocate(line))
+    batch.allocate(line)
+    return batch.reference
+</code></pre><h3 id="예외와-도메인-개념">예외와 도메인 개념</h3>
+<ul>
+<li>예외로 도메인 개념을 표현할 수 있다.</li>
+<li>예를 들면 <code>allocate</code>시 품절 개념을 예외로 표현할 수 있다.</li>
+<li><p>역시 테스트 코드부터 작성한다.</p>
+<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_raises_out_of_stock_exception_if_cannot_allocate</span>():</span>
+  batch = Batch(<span class="hljs-string">&quot;batch1&quot;</span>, <span class="hljs-string">&quot;SMALL-FORK&quot;</span>, <span class="hljs-number">10</span>, eta=today)
+  allocate(OrderLine(<span class="hljs-string">&quot;order1&quot;</span>, <span class="hljs-string">&quot;SMALL-FORK&quot;</span>, <span class="hljs-number">10</span>), [batch])
+
+  <span class="hljs-keyword">with</span> pytest.raises(OutOfStock, match=<span class="hljs-string">&quot;SMALL-FORK&quot;</span>):
+      allocate(OrderLine(<span class="hljs-string">&quot;order2&quot;</span>, <span class="hljs-string">&quot;SMALL-FORK&quot;</span>, <span class="hljs-number">1</span>), [batch])
+</code></pre>
+</li>
+<li>그리고 구현한다. Batch 를 찾지못할 시 <code>OutOfStock</code> 예외를 발생시킨다.<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate</span>(<span class="hljs-params">line: OrderLine, batches: <span class="hljs-type">List</span>[Batch]</span>) -&gt; <span class="hljs-built_in">str</span>:</span>
+  <span class="hljs-keyword">try</span>:
+      batch = <span class="hljs-built_in">next</span>(b <span class="hljs-keyword">for</span> b <span class="hljs-keyword">in</span> <span class="hljs-built_in">sorted</span>(batches) <span class="hljs-keyword">if</span> b.can_allocate(line))
+      batch.allocate(line)
+      <span class="hljs-keyword">return</span> batch.reference
+  <span class="hljs-keyword">except</span> StopIteration:
+      <span class="hljs-keyword">raise</span> OutOfStock(<span class="hljs-string">f&quot;Out of stock for sku <span class="hljs-subst">{line.sku}</span>&quot;</span>)
+</code></pre>
+</li>
+</ul>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="../chapter0/" class="navigation navigation-prev " aria-label="Previous page: Chapter 0. 도입">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="../chapter2/" class="navigation navigation-next " aria-label="Next page: Chapter 2. 저장소 패턴">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Chapter 1. 도메인 모델링","level":"2.1","depth":1,"next":{"title":"Chapter 2. 저장소 패턴","level":"2.2","depth":1,"path":"chapter2/README.md","ref":"chapter2/README.md","articles":[]},"previous":{"title":"Chapter 0. 도입","level":"1.2","depth":1,"path":"chapter0/README.md","ref":"chapter0/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter1/README.md","mtime":"2021-08-14T14:45:13.802Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-14T14:45:29.291Z"},"basePath":"..","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <noscript>
+        <style>
+            .honkit-cloak {
+                display: block !important;
+            }
+        </style>
+    </noscript>
+    <script>
+        // Restore sidebar state as critical path for prevent layout shift
+        function __init__getSidebarState(defaultValue){
+            var baseKey = "";
+            var key = baseKey + ":sidebar";
+            try {
+                var value = localStorage[key];
+                if (value === undefined) {
+                    return defaultValue;
+                }
+                var parsed = JSON.parse(value);
+                return parsed == null ? defaultValue : parsed;
+            } catch (e) {
+                return defaultValue;
+            }
+        }
+        function __init__restoreLastSidebarState() {
+            var isMobile = window.matchMedia("(max-width: 600px)").matches;
+            if (isMobile) {
+                // Init last state if not mobile
+                return;
+            }
+            var sidebarState = __init__getSidebarState(true);
+            var book = document.querySelector(".book");
+            // Show sidebar if it enabled
+            if (sidebarState && book) {
+                book.classList.add("without-animation", "with-summary");
+            }
+        }
+
+        try {
+            __init__restoreLastSidebarState();
+        } finally {
+            var book = document.querySelector(".book");
+            book.classList.remove("honkit-cloak");
+        }
+    </script>
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

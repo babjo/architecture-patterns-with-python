@@ -1,0 +1,23 @@
+{
+  "name": "architecture-patterns-with-python",
+  "version": "1.0.0",
+  "description": "파이썬으로 살펴보는 아키텍쳐 패턴: TDD, DDD, EDM 요약입니다. https://book.naver.com/bookdb/book_detail.nhn?bid=20554246",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/babjo/architecture-patterns-with-python.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/babjo/architecture-patterns-with-python/issues"
+  },
+  "homepage": "https://github.com/babjo/architecture-patterns-with-python#readme",
+  "devDependencies": {
+    "honkit": "^3.6.20"
+  }
+}

@@ -1,0 +1,501 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <title>Chapter 2. 저장소 패턴 · HonKit</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="HonKit 3.6.20">
+        
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="../chapter3/" />
+    
+    
+    <link rel="prev" href="../chapter1/" />
+    
+
+    </head>
+    <body>
+        
+<div class="book honkit-cloak">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="../">
+            
+                <a href="../">
+            
+                    
+                    이 문서에 대해
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="../chapter0/">
+            
+                <a href="../chapter0/">
+            
+                    
+                    Chapter 0. 도입
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">Part 1. 도메인 모델링을 지원하는 아키텍처 구축</li>
+        
+        
+    
+        <li class="chapter " data-level="2.1" data-path="../chapter1/">
+            
+                <a href="../chapter1/">
+            
+                    
+                    Chapter 1. 도메인 모델링
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="2.2" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Chapter 2. 저장소 패턴
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.3" data-path="../chapter3/">
+            
+                <a href="../chapter3/">
+            
+                    
+                    Chapter 3. 막간: 결합과 추상화
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.4" data-path="../chapter4/">
+            
+                <a href="../chapter4/">
+            
+                    
+                    Chapter 4. 서비스 계층
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://github.com/honkit/honkit" target="blank" class="gitbook-link">
+            Published with HonKit
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href=".." >Chapter 2. 저장소 패턴</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h2 id="저장소-패턴">저장소 패턴</h2>
+<h3 id="도메인-모델-영속화">도메인 모델 영속화</h3>
+<ul>
+<li>기능 개발을 위해 도메인 모델을 데이터베이스든 어디든 영속화할 방법이 필요하다. <pre><code class="lang-python"><span class="hljs-meta">@flask.route.gubbins</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate_endpoint</span>():</span>
+  <span class="hljs-comment"># 요청으로부터 주문 라인 추출</span>
+  line = OrderLine(reuquest.params, ...)
+  <span class="hljs-comment"># DB에서 모든 배치 가져오기</span>
+  batches = ...
+  <span class="hljs-comment"># 도메인 서비스 호출</span>
+  allocate(line, batches)
+  <span class="hljs-comment"># 어떤 방식으로든 할당한 배치를 다시 데이터베이스에 저장</span>
+  <span class="hljs-keyword">return</span> <span class="hljs-number">201</span>
+</code></pre>
+</li>
+</ul>
+<h3 id="일반적인-orm">일반적인 ORM</h3>
+<ul>
+<li>보통 많이 사용되는 패턴이다.</li>
+<li>도메인 모델이 ORM 에 의존하는 치명적인 단점을 가진다.
+```python
+from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship</li>
+</ul>
+<p>Base = declarative_base()</p>
+<p>class Order(Base):
+    id = Column(Integer, primary_key=True)</p>
+<p>class OrderLine(Base):
+    id = Column(Integer, primary_key=True)
+    sku = Column(String(250))
+    qty = Integer(String(250))
+    order_id = Column(Integer, ForeignKey(&apos;order.id&apos;))
+    order = relationship(Order)</p>
+<p>class Allocation(Base):
+    ...</p>
+<pre><code>
+### 순수한 도메인 유지하는 ORM
+- 도메인 모델은 ORM 을 모르는 것이 좋다.
+- 매퍼를 정의하면 의존성을 없앨 수 있다.
+- 다만 도메인 모델에 변경이 생기면 매퍼 변경이 필요하다.
+  - 새로운 결정을 할 때는 트레이드오프를 생각해야한다.
+  - 종종 정석보다는 실용적인 이유로 선택을 포기하기도 한다.
+```python
+from sqlalchemy import Table, MetaData, Column, Integer, String, Date, ForeignKey
+from sqlalchemy.orm import mapper, relationship
+
+import model
+
+metadata = MetaData()
+
+order_lines = Table(
+    &quot;order_lines&quot;,
+    metadata,
+    Column(&quot;id&quot;, Integer, primary_key=True, autoincrement=True),
+    Column(&quot;sku&quot;, String(255)),
+    Column(&quot;qty&quot;, Integer, nullable=False),
+    Column(&quot;orderid&quot;, String(255)),
+)
+
+batches = Table(
+    &quot;batches&quot;,
+    metadata,
+    Column(&quot;id&quot;, Integer, primary_key=True, autoincrement=True),
+    Column(&quot;reference&quot;, String(255)),
+    Column(&quot;sku&quot;, String(255)),
+    Column(&quot;_purchased_quantity&quot;, Integer, nullable=False),
+    Column(&quot;eta&quot;, Date, nullable=True),
+)
+
+allocations = Table(
+    &quot;allocations&quot;,
+    metadata,
+    Column(&quot;id&quot;, Integer, primary_key=True, autoincrement=True),
+    Column(&quot;orderline_id&quot;, ForeignKey(&quot;order_lines.id&quot;)),
+    Column(&quot;batch_id&quot;, ForeignKey(&quot;batches.id&quot;)),
+)
+
+
+def start_mappers():
+    lines_mapper = mapper(model.OrderLine, order_lines)
+    mapper(
+        model.Batch,
+        batches,
+        properties={
+            &quot;_allocations&quot;: relationship(
+                lines_mapper, secondary=allocations, collection_class=set,
+            )
+        },
+    )
+</code></pre><h3 id="dip-추상화한-저장소">DIP (추상화한 저장소)</h3>
+<ul>
+<li>0장에서 계층화로 기분, 각 계층에서 접근할 수 있는 계층을 한정한다고 했다.<ul>
+<li>표현 계층 -&gt; 비지니스 계층 -&gt; 데이터베이스 계층</li>
+</ul>
+</li>
+<li>비지니스 계층에서 데이터베이스 계층을 참조할 때 추상화된 저장소를 통하도록 한다.<ul>
+<li>비지니스 계층에서 데이터베이스 계층 구체적인 내용을 몰라도 된다.</li>
+<li>테스트 코드 작성이 가능해진다.</li>
+</ul>
+</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AbstractRepository</span>(<span class="hljs-params">abc.ABC</span>):</span>
+<span class="hljs-meta">    @abc.abstractmethod</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">add</span>(<span class="hljs-params">self, batch: model.Batch</span>):</span>
+        <span class="hljs-keyword">raise</span> <span class="hljs-literal">NotImplemented</span>
+<span class="hljs-meta">    @abc.abstractmethod</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get</span>(<span class="hljs-params">self, reference</span>) -&gt; model.Batch:</span>
+        <span class="hljs-keyword">raise</span> <span class="hljs-literal">NotImplemented</span>
+</code></pre>
+<h4 id="실제-저장소">실제 저장소</h4>
+<ul>
+<li><p>Production 에서 사용할 저장소를 <code>AbstractRepository</code>를 상속해 구현할 수 있다. </p>
+<pre><code class="lang-python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SqlAlchemyRepository</span>(<span class="hljs-params">AbstractRepository</span>):</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, session</span>):</span>
+      self.session = session
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">add</span>(<span class="hljs-params">self, batch</span>):</span>
+      self.session.add(batch)
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get</span>(<span class="hljs-params">self, reference</span>):</span>
+      <span class="hljs-keyword">return</span> self.session.query(model.Batch).filter_by(reference=reference).one()
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">list</span>(<span class="hljs-params">self</span>):</span>
+      <span class="hljs-keyword">return</span> self.session.query(model.Batch).<span class="hljs-built_in">all</span>()
+</code></pre>
+</li>
+</ul>
+<h4 id="테스트를-위한-가짜-저장소">테스트를 위한 가짜 저장소</h4>
+<ul>
+<li>비지니스 계층 테스트를 위해 가짜 저장소를 만들 수 있다.</li>
+<li><p>추상화를 하면서 얻는 가장 큰 이점이다.</p>
+<pre><code class="lang-python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FakeRepository</span>(<span class="hljs-params">AbstractRepository</span>):</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, batches</span>):</span>
+      self._batches = <span class="hljs-built_in">set</span>(batches)
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">add</span>(<span class="hljs-params">self, batch</span>):</span>
+      self._batches.add(batch)
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get</span>(<span class="hljs-params">self, reference</span>):</span>
+      <span class="hljs-keyword">return</span> <span class="hljs-built_in">next</span>(b <span class="hljs-keyword">for</span> b <span class="hljs-keyword">in</span> self._batches <span class="hljs-keyword">if</span> b.reference == reference)
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">list</span>(<span class="hljs-params">self</span>):</span>
+      <span class="hljs-keyword">return</span> <span class="hljs-built_in">list</span>(self._batches)
+</code></pre>
+</li>
+</ul>
+<h3 id="트레이드오프">트레이드오프</h3>
+<ul>
+<li>어떤 도입에는 장/단이 있다.</li>
+<li>장점<ul>
+<li>저장소를 추상화했기에 구체적인 인프라는 언제든 교체될 수 있다. (예를 들면, mysql -&gt; mongodb 로 전환)</li>
+<li>가짜 저장소처럼 테스트 가능한 코드를 만들 수 있다. </li>
+</ul>
+</li>
+<li>단점<ul>
+<li>저장소를 추상화하므로 복잡도가 증가한다.</li>
+<li>동시 계속 유지보수해야하는 비용이 발생한다.</li>
+</ul>
+</li>
+</ul>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="../chapter1/" class="navigation navigation-prev " aria-label="Previous page: Chapter 1. 도메인 모델링">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="../chapter3/" class="navigation navigation-next " aria-label="Next page: Chapter 3. 막간: 결합과 추상화">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Chapter 2. 저장소 패턴","level":"2.2","depth":1,"next":{"title":"Chapter 3. 막간: 결합과 추상화","level":"2.3","depth":1,"path":"chapter3/README.md","ref":"chapter3/README.md","articles":[]},"previous":{"title":"Chapter 1. 도메인 모델링","level":"2.1","depth":1,"path":"chapter1/README.md","ref":"chapter1/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter2/README.md","mtime":"2021-08-14T14:45:13.802Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-14T14:45:29.291Z"},"basePath":"..","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <noscript>
+        <style>
+            .honkit-cloak {
+                display: block !important;
+            }
+        </style>
+    </noscript>
+    <script>
+        // Restore sidebar state as critical path for prevent layout shift
+        function __init__getSidebarState(defaultValue){
+            var baseKey = "";
+            var key = baseKey + ":sidebar";
+            try {
+                var value = localStorage[key];
+                if (value === undefined) {
+                    return defaultValue;
+                }
+                var parsed = JSON.parse(value);
+                return parsed == null ? defaultValue : parsed;
+            } catch (e) {
+                return defaultValue;
+            }
+        }
+        function __init__restoreLastSidebarState() {
+            var isMobile = window.matchMedia("(max-width: 600px)").matches;
+            if (isMobile) {
+                // Init last state if not mobile
+                return;
+            }
+            var sidebarState = __init__getSidebarState(true);
+            var book = document.querySelector(".book");
+            // Show sidebar if it enabled
+            if (sidebarState && book) {
+                book.classList.add("without-animation", "with-summary");
+            }
+        }
+
+        try {
+            __init__restoreLastSidebarState();
+        } finally {
+            var book = document.querySelector(".book");
+            book.classList.remove("honkit-cloak");
+        }
+    </script>
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+
