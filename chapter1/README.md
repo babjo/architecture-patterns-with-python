@@ -7,6 +7,7 @@
 ### 단위테스트
 - 도메인 모델 코드를 바로 작성하지 않고 테스트부터 작성한다. (TDD)
 - 포인트는 비지니스 영역에 있는 용어들을 가져와 작성한다.
+
 ```python
 def test_allocating_to_a_batch_reduces_the_available_quantity():
     # given
@@ -21,6 +22,7 @@ def test_allocating_to_a_batch_reduces_the_available_quantity():
 ```
 
 - 위 테스트가 통과할 수 있도록 도메인 모델을 작성한다.
+
 ```python
 @dataclass(frozen=True)
 class OrderLine:
@@ -40,6 +42,7 @@ class Batch:
 ```
 
 - 이어서 `can_allocate` 메소드에 대해 테스트 코드를 작성한다.
+
 ```python
 def make_batch_and_line(sku, batch_qty, line_qty):
     return (
@@ -67,20 +70,25 @@ def test_cannot_allocate_if_skus_do_not_match():
     different_sku_line = OrderLine("order-123", "EXPENSIVE-TOASTER", 10)
     assert batch.can_allocate(different_sku_line) is False
 ```
+
 - 실패를 확인하고 `can_allocate` 메소드를 구현한다.
+
 ```python
     def can_allocate(self, line: OrderLine):
         return self.sku == line.sku and self.available_quantity >= line.qty
 ```
 
 - `deallocate` 할 수 있다면 어떨까?
+
 ```python
 def test_can_only_deallocate_allocated_lines():
     batch, unallocated_line = make_batch_and_line("DECORATIVE-TRINKET", 20, 2)
     batch.deallocate(unallocated_line)
     assert batch.available_quantity == 20
 ```
+
 - 기존 할당된 line 을 기억하고 있어야한다
+
 ```python
 class Batch:
     def __init__(self, ref: str, sku: str, qty: int, eta: Optional[date]):
@@ -109,6 +117,7 @@ class Batch:
     def can_allocate(self, line: OrderLine):
         return self.sku == line.sku and self.available_quantity >= line.qty
 ```
+
 - 이렇게 비지니스 로직을 도메인 모델에 모아 구현할 수 있다.
 
 ### 엔티티 vs 값 객체
@@ -127,6 +136,7 @@ class Batch:
 - 비지니스 로직이 꼭 도메인 객체 메소드로 구현될 필요는 없다.
 - 엔티티나 값 객체 두기 애매한 비지니스 로직이 있다. 이를 도메인 서비스 함수로 만들 수 있다.
 - 여러 Batch 중 하나를 선택해 `allocate` 하는 경우 Batch, OrderLine 중 어디에 둘지 애매해진다. 
+
 ```python
 def test_prefers_current_stock_batches_to_shipments():
     in_stock_batch = Batch("in-stock-batch", "RETRO-CLOCK", 100, eta=None)
@@ -159,7 +169,9 @@ def test_returns_allocated_batch_ref():
     allocation = allocate(line, [in_stock_batch, shipment_batch])
     assert allocation == in_stock_batch.reference
 ```
+
 - 이 경우 새롭게 서비스 함수를 만들면 좋다.
+
 ```python
 def allocate(line: OrderLine, batches: List[Batch]) -> str:
     batch = next(b for b in sorted(batches) if b.can_allocate(line))
@@ -171,6 +183,7 @@ def allocate(line: OrderLine, batches: List[Batch]) -> str:
 - 예외로 도메인 개념을 표현할 수 있다.
 - 예를 들면 `allocate`시 품절 개념을 예외로 표현할 수 있다.
 - 역시 테스트 코드부터 작성한다.
+
 ```python
 def test_raises_out_of_stock_exception_if_cannot_allocate():
     batch = Batch("batch1", "SMALL-FORK", 10, eta=today)
@@ -179,7 +192,9 @@ def test_raises_out_of_stock_exception_if_cannot_allocate():
     with pytest.raises(OutOfStock, match="SMALL-FORK"):
         allocate(OrderLine("order2", "SMALL-FORK", 1), [batch])
 ```
+
 - 그리고 구현한다. Batch 를 찾지못할 시 `OutOfStock` 예외를 발생시킨다.
+
 ```python
 def allocate(line: OrderLine, batches: List[Batch]) -> str:
     try:

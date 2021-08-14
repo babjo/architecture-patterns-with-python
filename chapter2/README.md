@@ -1,6 +1,7 @@
 ## 저장소 패턴
 ### 도메인 모델 영속화
 - 기능 개발을 위해 도메인 모델을 데이터베이스든 어디든 영속화할 방법이 필요하다. 
+
 ```python
 @flask.route.gubbins
 def allocate_endpoint():
@@ -17,6 +18,7 @@ def allocate_endpoint():
 ### 일반적인 ORM
 - 보통 많이 사용되는 패턴이다.
 - 도메인 모델이 ORM 에 의존하는 치명적인 단점을 가진다.
+
 ```python
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
@@ -44,6 +46,7 @@ class Allocation(Base):
 - 다만 도메인 모델에 변경이 생기면 매퍼 변경이 필요하다.
   - 새로운 결정을 할 때는 트레이드오프를 생각해야한다.
   - 종종 정석보다는 실용적인 이유로 선택을 포기하기도 한다.
+
 ```python
 from sqlalchemy import Table, MetaData, Column, Integer, String, Date, ForeignKey
 from sqlalchemy.orm import mapper, relationship
@@ -112,6 +115,7 @@ class AbstractRepository(abc.ABC):
 
 #### 실제 저장소
 - Production 에서 사용할 저장소를 `AbstractRepository`를 상속해 구현할 수 있다. 
+
 ```python
 class SqlAlchemyRepository(AbstractRepository):
     def __init__(self, session):
@@ -130,6 +134,7 @@ class SqlAlchemyRepository(AbstractRepository):
 #### 테스트를 위한 가짜 저장소
 - 비지니스 계층 테스트를 위해 가짜 저장소를 만들 수 있다.
 - 추상화를 하면서 얻는 가장 큰 이점이다.
+
 ```python
 class FakeRepository(AbstractRepository):
     def __init__(self, batches):

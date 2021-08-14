@@ -7,9 +7,9 @@
 - 플라스크를 이용하여 만든 기능을 웹으로 제공하고 싶다.
 - TDD이니 테스트 코드부터 작성한다.
 - E2E 테스트를 작성한다. (느린 테스트)
+
 ```python
 # test_api.py
-
 @pytest.mark.usefixtures('restart_api')
 def test_api_returns_allocation(add_stock):
     sku, othersku = random_sku(), random_sku("other")
@@ -27,14 +27,15 @@ def test_api_returns_allocation(add_stock):
     assert r.status_code == 201
     assert r.json()['batchref'] == earlybatch
 ```
+
 - 로컬에 postgresql, api 서버를 올리고 requests 로 실제 테스트한다.
 
 ### 직접 구현하기
 - 가장 뻔한 방법으로 구현해본다.
 - endpoint 함수에서 직접 repo 로 도메인 모델을 가져와 작업한다. 마지막에 `session.commit()` 해준다.
+
 ```python
 # flask_app.py
-
 @app.route("/allocate", methods=["POST"])
 def allocate_endpoint():
     session = get_session()
@@ -51,9 +52,9 @@ def allocate_endpoint():
 ### 오류 조건 추가
 - 여기서 실패하는 경우도 추가하고 싶다.
 - 재고가 없는 경우, 잘못된 sku 가 들어온 경우 E2E 테스트코드 작성한다.
+
 ```python
 # test_api.py
-
 @pytest.mark.usefixtures('restart_api')
 def test_400_message_for_out_of_stock(add_stock):
     sku, small_batch, large_order = random_sku(), random_batchref(), random_orderid()
@@ -80,9 +81,9 @@ def test_400_message_for_invaild_sku():
 #### 복잡해지는 `allocate_endpoint` 함수
 - 위 오류 조건 추가로 `flask_app.py` 에 구현 필요하다.
 - `allocate_endpoint` 를 수정하면 되는데 점점 복잡해지는 느낌이다.
+
 ```python
 # flask_app.py
-
 def is_valid_sku(sku, batches):
     return sku in {b.sku for b in batches}
 
@@ -105,6 +106,7 @@ def allocate_endpoint():
 
     return {"batchref": batchref}, 201
 ```
+
 - 더 큰 문제는 E2E 테스트가 많아진다는 것이다.
   - E2E 테스트보다는 유닛 테스트 수가 많은 것이 좋다.
 
@@ -114,6 +116,7 @@ def allocate_endpoint():
   - 저장소로부터 도메인 모델을 가져온다.
   - 도메인 모델 조작 성공 후 저장을 위해 `session.commit()` 한다.
 - 오케스트레이션 계층은 서비스 계층으로 빼내는 것이 좋다.
+
 ```python
 # services.py
 class InvalidSku(Exception):
@@ -134,9 +137,9 @@ def allocate(line: OrderLine, repo: AbstractRepository, session) -> str:
 #### FakeRepository 사용하기
 - 서비스 계층에 대한 테스트코드 필요하다.
 - 이 때 저장소에 대한 의존성을 해결해줄 `FakeRepository`를 구현하고 이용할 수 있다.
+
 ```python
 # test_service.py
-
 class FakeRepository(repository.AbstractRepository):
     def __init__(self, batches):
         self._batches = set(batches)
@@ -184,9 +187,9 @@ def test_commits():
 
 #### 서비스 계층에 위임하는 플라스크 앱
 - 서비스 계층을 만들어줬으니 `allocate_endpoint` 함수에서 위임해주도록 하자.
+
 ```python
 # flask_app.py 
-
 @app.route("/allocate", methods=["POST"])
 def allocate_endpoint():
     session = get_session()
@@ -200,12 +203,13 @@ def allocate_endpoint():
 
     return {"batchref": batchref}, 201
 ```
+
 - 서비스 계층에 위임하고 테스트 코드로 검증했으니 불필요한 E2E 테스트는 지울 수 있다.
   - 성공 케이스 하나, 실패 케이스 하나로 정리할 수 있다.
   - 웹 기능을 테스트하는 것만 남긴다. (오케스트레이션 기능들은 서비스 계층 테스트로 커버한다.) 
+
 ```python
 # test_api.py
-
 @pytest.mark.usefixtures("restart_api")
 def test_happy_path_returns_201_and_allocated_batch(add_stock):
     sku, othersku = random_sku(), random_sku("other")
