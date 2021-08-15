@@ -8,3 +8,4 @@
 * [Chapter 2. 저장소 패턴](chapter2/README.md)
 * [Chapter 3. 막간: 결합과 추상화](chapter3/README.md)
 * [Chapter 4. 서비스 계층](chapter4/README.md)
+* [Chapter 5. 높은 기어비와 낮은 기어비의 TDD](chapter5/README.md)
