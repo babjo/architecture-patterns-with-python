@@ -1,0 +1,447 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <title>Chapter 5. 높은 기어비와 낮은 기어비의 TDD · HonKit</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="HonKit 3.6.20">
+        
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    
+    <link rel="prev" href="../chapter4/" />
+    
+
+    </head>
+    <body>
+        
+<div class="book honkit-cloak">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="../">
+            
+                <a href="../">
+            
+                    
+                    이 문서에 대해
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="../chapter0/">
+            
+                <a href="../chapter0/">
+            
+                    
+                    Chapter 0. 도입
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">Part 1. 도메인 모델링을 지원하는 아키텍처 구축</li>
+        
+        
+    
+        <li class="chapter " data-level="2.1" data-path="../chapter1/">
+            
+                <a href="../chapter1/">
+            
+                    
+                    Chapter 1. 도메인 모델링
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.2" data-path="../chapter2/">
+            
+                <a href="../chapter2/">
+            
+                    
+                    Chapter 2. 저장소 패턴
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.3" data-path="../chapter3/">
+            
+                <a href="../chapter3/">
+            
+                    
+                    Chapter 3. 막간: 결합과 추상화
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.4" data-path="../chapter4/">
+            
+                <a href="../chapter4/">
+            
+                    
+                    Chapter 4. 서비스 계층
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="2.5" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Chapter 5. 높은 기어비와 낮은 기어비의 TDD
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://github.com/honkit/honkit" target="blank" class="gitbook-link">
+            Published with HonKit
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href=".." >Chapter 5. 높은 기어비와 낮은 기어비의 TDD</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h2 id="높은-기어비와-낮은-기어비의-tdd">높은 기어비와 낮은 기어비의 TDD</h2>
+<h3 id="테스트-피라미드">테스트 피라미드</h3>
+<ul>
+<li>비용이슈로 테스트는 <code>단위테스트 수 &gt; 통합테스트 수 &gt; E2E 수</code>를 따르면 좋다.</li>
+</ul>
+<p><img src="https://miro.medium.com/max/1400/1*Tcj3OsK8Kou7tCMQgeeCuw.png" alt></p>
+<ul>
+<li>지금까지 작성한 테스트 갯수를 세보자.</li>
+</ul>
+<pre><code>$ grep -c test_ test_*.py
+tests/unit/test_allocate.py
+tests/unit/test_batches.py
+tests/unit/test_services.py
+
+tests/integration/test_orm.py
+tests/integration/test_repository.py
+
+tests/e2e/test_api.py
+</code></pre><ul>
+<li>단위테스트 15개, 통합테스트 8개, E2E 테스트 2개뿐이다.<ul>
+<li>괜찮아보인다.</li>
+</ul>
+</li>
+</ul>
+<h3 id="도메인-모델-의존성-분리">도메인 모델 의존성 분리</h3>
+<ul>
+<li>도메인 모델은 전계층에 많이 사용될 수 있다.</li>
+<li>그런데 반대로 이야기하면 도메인 모델 변경은 전계층 변경을 불러올 수 있으며 전계층에 대한 테스트코드 또한 변경이 필요해진다.</li>
+<li>도메인 모델을 가장 많이 이용하는 서비스 계층에서 도메인 모델과 의존을 분리해보자.</li>
+<li>서비스 계층 함수 시그니쳐에서 도메인 모델을 제거하자.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-comment"># service_layer/services.py</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate</span>(<span class="hljs-params">orderid: <span class="hljs-built_in">str</span>, sku: <span class="hljs-built_in">str</span>, qty: <span class="hljs-built_in">int</span>, repo: AbstractRepository, session</span>) -&gt; <span class="hljs-built_in">str</span>:</span>
+    line = OrderLine(orderid, sku, qty)
+    batches = repo.<span class="hljs-built_in">list</span>()
+    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> is_valid_sku(line.sku, batches):
+        <span class="hljs-keyword">raise</span> InvalidSku(<span class="hljs-string">f&quot;Invalid sku <span class="hljs-subst">{line.sku}</span>&quot;</span>)
+    batchref = model.allocate(line, batches)
+    session.commit()
+    <span class="hljs-keyword">return</span> batchref
+</code></pre>
+<ul>
+<li>도메인 모델 의존성을 픽스처 함수로 넣는다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-comment"># tests/test_services.py</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FakeRepository</span>(<span class="hljs-params">repository.AbstractRepository</span>):</span>
+
+<span class="hljs-meta">    @staticmethod</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">for_batch</span>(<span class="hljs-params">ref, sku, qty, eta=<span class="hljs-literal">None</span></span>):</span>
+        <span class="hljs-keyword">return</span> FakeRepository([
+            model.Batch(ref, sku, qty, eta)
+        ])
+...
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_returns_allocation</span>():</span>
+    repo = FakeRepository.for_batch(<span class="hljs-string">&quot;b1&quot;</span>, <span class="hljs-string">&quot;COMPLICATED-LAMP&quot;</span>, <span class="hljs-number">100</span>, eta=<span class="hljs-literal">None</span>)
+    result = services.allocate(<span class="hljs-string">&quot;o1&quot;</span>, <span class="hljs-string">&quot;COMPLICATED-LAMP&quot;</span>, <span class="hljs-number">10</span>, repo, FakeSession())
+    <span class="hljs-keyword">assert</span> result == <span class="hljs-string">&quot;b1&quot;</span>
+</code></pre>
+<ul>
+<li>도메인 모델에 대한 의존이 없어졌으니 도메인 모델 변경이 쉬워졌다.</li>
+</ul>
+<h4 id="한단계-더">한단계 더</h4>
+<ul>
+<li>서비스 계층에 <code>Batch</code> 를 추가하는 함수가 있으면 온전히 서비스 계층 함수만으로 서비스 계층 테스트를 만들 수 있다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-comment"># service_layer/services.py</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">add_batch</span>(<span class="hljs-params">ref: <span class="hljs-built_in">str</span>, sku: <span class="hljs-built_in">str</span>, qty: <span class="hljs-built_in">int</span>, eta: <span class="hljs-type">Optional</span>[date], repo, session</span>):</span>
+    repo.add(model.Batch(ref, sku, qty, eta))
+    session.commit()
+</code></pre>
+<pre><code class="lang-python"><span class="hljs-comment"># tests/test_services.py</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_returns_allocation</span>():</span>
+    repo, session = FakeRepository([]), FakeSession()
+    services.add_batch(<span class="hljs-string">&quot;b1&quot;</span>, <span class="hljs-string">&quot;COMPLICATED-LAMP&quot;</span>, <span class="hljs-number">100</span>, <span class="hljs-literal">None</span>, repo, session)
+
+    result = services.allocate(<span class="hljs-string">&quot;o1&quot;</span>, <span class="hljs-string">&quot;COMPLICATED-LAMP&quot;</span>, <span class="hljs-number">10</span>, repo, session)
+    <span class="hljs-keyword">assert</span> result == <span class="hljs-string">&quot;b1&quot;</span>
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_add_batch</span>():</span>
+    repo, session = FakeRepository([]), FakeSession()
+    services.add_batch(<span class="hljs-string">&quot;b1&quot;</span>, <span class="hljs-string">&quot;CRUNCHY-ARMCHAIR&quot;</span>, <span class="hljs-number">100</span>, <span class="hljs-literal">None</span>, repo, session)
+    <span class="hljs-keyword">assert</span> repo.get(<span class="hljs-string">&quot;b1&quot;</span>) <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>
+    <span class="hljs-keyword">assert</span> session.committed
+</code></pre>
+<ul>
+<li><code>add_batch(...)</code> 함수를 엔드포인트로 노출하면 불필요한 픽스처도 없앨 수 있다.</li>
+</ul>
+<h3 id="정리">정리</h3>
+<ul>
+<li>기능당 E2E 테스트는 하나만 만든다. (잘 부품이 연결됐는지 정도) (가급적이면 적게 만든다.)</li>
+<li>테스트 대부분은 서비스 계층으로 한다.<ul>
+<li>Fake 객체 사용으로 시간 절감이 가능하며 비지니스 로직, 에지 케이스 모두 확인가능하다.</li>
+</ul>
+</li>
+<li>도메인 모델은 핵심 테스트만 작성하고 작게 유지한다.<ul>
+<li>변경이 용이해진다.</li>
+</ul>
+</li>
+</ul>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="../chapter4/" class="navigation navigation-prev navigation-unique" aria-label="Previous page: Chapter 4. 서비스 계층">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Chapter 5. 높은 기어비와 낮은 기어비의 TDD","level":"2.5","depth":1,"previous":{"title":"Chapter 4. 서비스 계층","level":"2.4","depth":1,"path":"chapter4/README.md","ref":"chapter4/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter5/README.md","mtime":"2021-08-15T01:14:04.969Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-15T01:14:18.996Z"},"basePath":"..","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <noscript>
+        <style>
+            .honkit-cloak {
+                display: block !important;
+            }
+        </style>
+    </noscript>
+    <script>
+        // Restore sidebar state as critical path for prevent layout shift
+        function __init__getSidebarState(defaultValue){
+            var baseKey = "";
+            var key = baseKey + ":sidebar";
+            try {
+                var value = localStorage[key];
+                if (value === undefined) {
+                    return defaultValue;
+                }
+                var parsed = JSON.parse(value);
+                return parsed == null ? defaultValue : parsed;
+            } catch (e) {
+                return defaultValue;
+            }
+        }
+        function __init__restoreLastSidebarState() {
+            var isMobile = window.matchMedia("(max-width: 600px)").matches;
+            if (isMobile) {
+                // Init last state if not mobile
+                return;
+            }
+            var sidebarState = __init__getSidebarState(true);
+            var book = document.querySelector(".book");
+            // Show sidebar if it enabled
+            if (sidebarState && book) {
+                book.classList.add("without-animation", "with-summary");
+            }
+        }
+
+        try {
+            __init__restoreLastSidebarState();
+        } finally {
+            var book = document.querySelector(".book");
+            book.classList.remove("honkit-cloak");
+        }
+    </script>
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+
