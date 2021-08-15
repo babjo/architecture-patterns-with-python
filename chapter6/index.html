@@ -327,7 +327,7 @@
 <li>추상화의 보상으로 가짜 작업 단위를 만들 수 있다.</li>
 <li>데이터 계층 접근은 <code>UoW</code>로 통하면 된다. </li>
 </ul>
-<pre><code class="lang-python"><span class="hljs-comment"># src/tests/unit/test_services.py</span>
+<pre><code class="lang-python"><span class="hljs-comment"># tests/unit/test_services.py</span>
 <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FakeUnitOfWork</span>(<span class="hljs-params">unit_of_work.AbstractUnitOfWork</span>):</span>
     <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self</span>):</span>
         self.batches = FakeRepository([])
@@ -356,7 +356,7 @@
 <ul>
 <li>테스트 작성을 했으니 실제 구현을 해준다. </li>
 </ul>
-<pre><code class="lang-python"><span class="hljs-comment"># src/src/allocation/service_layer/services.py</span>
+<pre><code class="lang-python"><span class="hljs-comment"># src/allocation/service_layer/services.py</span>
 <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">add_batch</span>(<span class="hljs-params">
     ref: <span class="hljs-built_in">str</span>, sku: <span class="hljs-built_in">str</span>, qty: <span class="hljs-built_in">int</span>, eta: <span class="hljs-type">Optional</span>[date],
     uow: unit_of_work.AbstractUnitOfWork,
@@ -381,7 +381,7 @@
 <ul>
 <li>추가적으로 롤백이 잘되는지 통합테스트 추가해볼 수 있겠다.</li>
 </ul>
-<pre><code class="lang-python"><span class="hljs-comment"># src/tests/integration/test_uow.py</span>
+<pre><code class="lang-python"><span class="hljs-comment"># tests/integration/test_uow.py</span>
 <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_rolls_back_on_error</span>(<span class="hljs-params">session_factory</span>):</span>
     <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyException</span>(<span class="hljs-params">Exception</span>):</span>
         <span class="hljs-keyword">pass</span>
@@ -400,7 +400,8 @@
 <ul>
 <li>예외가 발생하지 않은 경우 자동으로 커밋해주면 어떨까?</li>
 </ul>
-<pre><code class="lang-python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SqlAlchemyUnitOfWork</span>(<span class="hljs-params">AbstractUnitOfWork</span>):</span>
+<pre><code class="lang-python"><span class="hljs-comment"># src/allocation/service_layer/unit_of_work.py</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SqlAlchemyUnitOfWork</span>(<span class="hljs-params">AbstractUnitOfWork</span>):</span>
     ...
     <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__exit__</span>(<span class="hljs-params">self, exc_type, exc_val, exc_tb</span>):</span>
         <span class="hljs-keyword">if</span> exc_type <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:
@@ -458,7 +459,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Chapter 6. 작업 단위 패턴","level":"2.6","depth":1,"previous":{"title":"Chapter 5. 높은 기어비와 낮은 기어비의 TDD","level":"2.5","depth":1,"path":"chapter5/README.md","ref":"chapter5/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter6/README.md","mtime":"2021-08-15T03:13:18.297Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-15T03:13:24.364Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Chapter 6. 작업 단위 패턴","level":"2.6","depth":1,"previous":{"title":"Chapter 5. 높은 기어비와 낮은 기어비의 TDD","level":"2.5","depth":1,"path":"chapter5/README.md","ref":"chapter5/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter6/README.md","mtime":"2021-08-15T03:15:02.426Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-15T03:15:10.704Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>
