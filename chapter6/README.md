@@ -83,7 +83,7 @@ class SqlAlchemyUnitOfWork(AbstractUnitOfWork):
 - 데이터 계층 접근은 `UoW`로 통하면 된다. 
 
 ```python
-# src/tests/unit/test_services.py
+# tests/unit/test_services.py
 class FakeUnitOfWork(unit_of_work.AbstractUnitOfWork):
     def __init__(self):
         self.batches = FakeRepository([])
@@ -113,7 +113,7 @@ def test_add_batch():
 - 테스트 작성을 했으니 실제 구현을 해준다. 
 
 ```python
-# src/src/allocation/service_layer/services.py
+# src/allocation/service_layer/services.py
 def add_batch(
     ref: str, sku: str, qty: int, eta: Optional[date],
     uow: unit_of_work.AbstractUnitOfWork,
@@ -139,7 +139,7 @@ def allocate(
 - 추가적으로 롤백이 잘되는지 통합테스트 추가해볼 수 있겠다.
 
 ```python
-# src/tests/integration/test_uow.py
+# tests/integration/test_uow.py
 def test_rolls_back_on_error(session_factory):
     class MyException(Exception):
         pass
@@ -159,6 +159,7 @@ def test_rolls_back_on_error(session_factory):
 - 예외가 발생하지 않은 경우 자동으로 커밋해주면 어떨까?
 
 ```python
+# src/allocation/service_layer/unit_of_work.py
 class SqlAlchemyUnitOfWork(AbstractUnitOfWork):
     ...
     def __exit__(self, exc_type, exc_val, exc_tb):
