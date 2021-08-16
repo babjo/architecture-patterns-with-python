@@ -3,7 +3,7 @@
 <html lang="" >
     <head>
         <meta charset="UTF-8">
-        <title>Chapter 5. 높은 기어비와 낮은 기어비의 TDD · HonKit</title>
+        <title>Chapter 9. 메시지 버스를 타고 시내로 나가기 · HonKit</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="HonKit 3.6.20">
@@ -56,10 +56,8 @@
     <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
 
     
-    <link rel="next" href="../chapter6/" />
     
-    
-    <link rel="prev" href="../chapter4/" />
+    <link rel="prev" href="../chapter8/" />
     
 
     </head>
@@ -173,9 +171,9 @@
             
         </li>
     
-        <li class="chapter active" data-level="2.5" data-path="./">
+        <li class="chapter " data-level="2.5" data-path="../chapter5/">
             
-                <a href="./">
+                <a href="../chapter5/">
             
                     
                     Chapter 5. 높은 기어비와 낮은 기어비의 TDD
@@ -245,9 +243,9 @@
             
         </li>
     
-        <li class="chapter " data-level="3.2" data-path="../chapter9/">
+        <li class="chapter active" data-level="3.2" data-path="./">
             
-                <a href="../chapter9/">
+                <a href="./">
             
                     
                     Chapter 9. 메시지 버스를 타고 시내로 나가기
@@ -288,7 +286,7 @@
     <!-- Title -->
     <h1>
         <i class="fa fa-circle-o-notch fa-spin"></i>
-        <a href=".." >Chapter 5. 높은 기어비와 낮은 기어비의 TDD</a>
+        <a href=".." >Chapter 9. 메시지 버스를 타고 시내로 나가기</a>
     </h1>
 </div>
 
@@ -303,106 +301,89 @@
     
                                 <section class="normal markdown-section">
                                 
-                                <h2 id="높은-기어비와-낮은-기어비의-tdd">높은 기어비와 낮은 기어비의 TDD</h2>
-<h3 id="테스트-피라미드">테스트 피라미드</h3>
+                                <h2 id="메시지-버스를-타고-시내로-나가기">메시지 버스를 타고 시내로 나가기</h2>
+<h3 id="새로운-아키텍처가-필요한-새로운-요구사항">새로운 아키텍처가 필요한 새로운 요구사항</h3>
 <ul>
-<li>비용이슈로 테스트는 <code>단위테스트 수 &gt; 통합테스트 수 &gt; E2E 수</code>를 따르면 좋다.</li>
+<li>배치 수량 변경으로 주문라인을 다시 할당할 필요가 있을 수 있다.<ul>
+<li>재고 조사하는 동안 지붕이 물이 새서 <code>SPRINGY-MATTRESS</code> 3개가 손상된 것을 발견했다.</li>
+<li><code>RELIABLE-FORK</code> 배송에서 필요한 문서가 빠져서 몇 주 동안 세관에 머물러야 했다. 이후 <code>RELIABLE-FORK</code> 3개가 안전 검사에 실패해 폐기됐다.</li>
 </ul>
-<p><img src="https://miro.medium.com/max/1400/1*Tcj3OsK8Kou7tCMQgeeCuw.png" alt></p>
-<ul>
-<li>지금까지 작성한 테스트 갯수를 세보자.</li>
-</ul>
-<pre><code>$ grep -c test_ test_*.py
-tests/unit/test_allocate.py
-tests/unit/test_batches.py
-tests/unit/test_services.py
-
-tests/integration/test_orm.py
-tests/integration/test_repository.py
-
-tests/e2e/test_api.py
-</code></pre><ul>
-<li>단위테스트 15개, 통합테스트 8개, E2E 테스트 2개뿐이다.<ul>
-<li>괜찮아보인다.</li>
+</li>
+<li>이벤트 기반으로 상상해자.<ul>
+<li><code>BatchQuantityChanged</code> 이벤트가 발생하면 배치 수량을 변경, 수량이 부족하면 배치를 <code>deallocate</code>하고 <code>AllocationRequired</code> 이벤트를 발생할 수 있다.</li>
 </ul>
 </li>
 </ul>
-<h3 id="도메인-모델-의존성-분리">도메인 모델 의존성 분리</h3>
+<h4 id="모든-것이-이벤트-핸들러">모든 것이 이벤트 핸들러</h4>
 <ul>
-<li>도메인 모델은 모든 계층에 많이 사용될 수 있다.</li>
-<li>그런데 반대로 이야기하면 도메인 모델 변경은 모든 계층 변경을 불러올 수 있으며 모든 계층에 대한 테스트코드 또한 변경이 필요해진다.</li>
-<li>도메인 모델을 가장 많이 이용하는 서비스 계층에서 도메인 모델과 의존을 분리해보자.</li>
-<li>서비스 계층 함수 시그니쳐에서 도메인 모델을 제거하자.</li>
+<li>현재 두 개의 흐름이 있다.<ol>
+<li>서비스 계층 함수에 의해 처리되는 API 호출</li>
+<li>내부 이벤트와 그 이벤트에 대한 핸들러</li>
+</ol>
+</li>
+<li>1번에서 API 호출으로 이벤트를 발생시키고 서비스 계층 함수를 핸들러로 생각한다면 2번과 모양이 같아진다.<ul>
+<li><code>services.allocate()</code> 는 <code>AllocationRequired</code> 이벤트의 핸들러일 수 있다.</li>
+<li><code>services.add_batch()</code> 는 <code>BatchCreated</code> 이벤트의 핸들러일 수 있다.</li>
 </ul>
-<pre><code class="lang-python"><span class="hljs-comment"># service_layer/services.py</span>
-<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate</span>(<span class="hljs-params">orderid: <span class="hljs-built_in">str</span>, sku: <span class="hljs-built_in">str</span>, qty: <span class="hljs-built_in">int</span>, repo: AbstractRepository, session</span>) -&gt; <span class="hljs-built_in">str</span>:</span>
-    line = OrderLine(orderid, sku, qty)
-    batches = repo.<span class="hljs-built_in">list</span>()
-    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> is_valid_sku(line.sku, batches):
-        <span class="hljs-keyword">raise</span> InvalidSku(<span class="hljs-string">f&quot;Invalid sku <span class="hljs-subst">{line.sku}</span>&quot;</span>)
-    batchref = model.allocate(line, batches)
-    session.commit()
+</li>
+</ul>
+<h3 id="서비스-함수를-메시지-핸들러로-만들기">서비스 함수를 메시지 핸들러로 만들기</h3>
+<ul>
+<li>먼저 이벤트를 만들어준다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-comment"># src/allocation/domain/events.py</span>
+<span class="hljs-meta">@dataclass</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BatchCreated</span>(<span class="hljs-params">Event</span>):</span>
+    ref: <span class="hljs-built_in">str</span>
+    sku: <span class="hljs-built_in">str</span>
+    qty: <span class="hljs-built_in">int</span>
+    eta: <span class="hljs-type">Optional</span>[date] = <span class="hljs-literal">None</span>
+
+
+<span class="hljs-meta">@dataclass</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AllocationRequired</span>(<span class="hljs-params">Event</span>):</span>
+    orderid: <span class="hljs-built_in">str</span>
+    sku: <span class="hljs-built_in">str</span>
+    qty: <span class="hljs-built_in">int</span>
+</code></pre>
+<ul>
+<li>파일명 services.py 를 handlers.py 로 변경하고 이벤트를 사용하도록 변경한다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">add_batch</span>(<span class="hljs-params">
+        event: events.BatchCreated,
+        uow: unit_of_work.AbstractUnitOfWork,
+</span>):</span>
+    <span class="hljs-keyword">with</span> uow:
+        product = uow.products.get(sku=event.sku)
+        <span class="hljs-keyword">if</span> product <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:
+            product = model.Product(event.sku, batches=[])
+            uow.products.add(product)
+        product.batches.append(model.Batch(event.ref, event.sku, event.qty, event.eta))
+        uow.commit()
+
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate</span>(<span class="hljs-params">
+        event: events.AllocationRequired,
+        uow: unit_of_work.AbstractUnitOfWork,
+</span>) -&gt; <span class="hljs-built_in">str</span>:</span>
+    line = OrderLine(event.orderid, event.sku, event.qty)
+    <span class="hljs-keyword">with</span> uow:
+        product = uow.products.get(sku=line.sku)
+        <span class="hljs-keyword">if</span> product <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:
+            <span class="hljs-keyword">raise</span> InvalidSku(<span class="hljs-string">f&quot;Invalid sku <span class="hljs-subst">{line.sku}</span>&quot;</span>)
+        batchref = product.allocate(line)
+        uow.commit()
     <span class="hljs-keyword">return</span> batchref
-</code></pre>
-<ul>
-<li>도메인 모델 의존성을 픽스처 함수로 넣는다.</li>
-</ul>
-<pre><code class="lang-python"><span class="hljs-comment"># tests/test_services.py</span>
-<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FakeRepository</span>(<span class="hljs-params">repository.AbstractRepository</span>):</span>
 
-<span class="hljs-meta">    @staticmethod</span>
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">for_batch</span>(<span class="hljs-params">ref, sku, qty, eta=<span class="hljs-literal">None</span></span>):</span>
-        <span class="hljs-keyword">return</span> FakeRepository([
-            model.Batch(ref, sku, qty, eta)
-        ])
-...
 
-<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_returns_allocation</span>():</span>
-    repo = FakeRepository.for_batch(<span class="hljs-string">&quot;b1&quot;</span>, <span class="hljs-string">&quot;COMPLICATED-LAMP&quot;</span>, <span class="hljs-number">100</span>, eta=<span class="hljs-literal">None</span>)
-    result = services.allocate(<span class="hljs-string">&quot;o1&quot;</span>, <span class="hljs-string">&quot;COMPLICATED-LAMP&quot;</span>, <span class="hljs-number">10</span>, repo, FakeSession())
-    <span class="hljs-keyword">assert</span> result == <span class="hljs-string">&quot;b1&quot;</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">send_out_of_stock_notification</span>(<span class="hljs-params">event: events.OutOfStock</span>):</span>
+    email.send_mail(<span class="hljs-string">&apos;stock@made.com&apos;</span>, <span class="hljs-string">f&apos;Out of stock for <span class="hljs-subst">{event.sku}</span>&apos;</span>)
 </code></pre>
-<ul>
-<li>도메인 모델에 대한 의존이 없어졌으니 도메인 모델 변경이 쉬워졌다.</li>
-</ul>
-<h4 id="한단계-더">한단계 더</h4>
-<ul>
-<li>서비스 계층에 <code>Batch</code> 를 추가하는 함수가 있으면 온전히 서비스 계층 함수만으로 서비스 계층 테스트를 만들 수 있다.</li>
-</ul>
-<pre><code class="lang-python"><span class="hljs-comment"># service_layer/services.py</span>
-<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">add_batch</span>(<span class="hljs-params">ref: <span class="hljs-built_in">str</span>, sku: <span class="hljs-built_in">str</span>, qty: <span class="hljs-built_in">int</span>, eta: <span class="hljs-type">Optional</span>[date], repo, session</span>):</span>
-    repo.add(model.Batch(ref, sku, qty, eta))
-    session.commit()
-</code></pre>
-<pre><code class="lang-python"><span class="hljs-comment"># tests/test_services.py</span>
-<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_returns_allocation</span>():</span>
-    repo, session = FakeRepository([]), FakeSession()
-    services.add_batch(<span class="hljs-string">&quot;b1&quot;</span>, <span class="hljs-string">&quot;COMPLICATED-LAMP&quot;</span>, <span class="hljs-number">100</span>, <span class="hljs-literal">None</span>, repo, session)
-
-    result = services.allocate(<span class="hljs-string">&quot;o1&quot;</span>, <span class="hljs-string">&quot;COMPLICATED-LAMP&quot;</span>, <span class="hljs-number">10</span>, repo, session)
-    <span class="hljs-keyword">assert</span> result == <span class="hljs-string">&quot;b1&quot;</span>
-
-<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_add_batch</span>():</span>
-    repo, session = FakeRepository([]), FakeSession()
-    services.add_batch(<span class="hljs-string">&quot;b1&quot;</span>, <span class="hljs-string">&quot;CRUNCHY-ARMCHAIR&quot;</span>, <span class="hljs-number">100</span>, <span class="hljs-literal">None</span>, repo, session)
-    <span class="hljs-keyword">assert</span> repo.get(<span class="hljs-string">&quot;b1&quot;</span>) <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>
-    <span class="hljs-keyword">assert</span> session.committed
-</code></pre>
-<ul>
-<li><code>add_batch(...)</code> 함수를 엔드포인트로 노출하면 불필요한 픽스처도 없앨 수 있다.</li>
-</ul>
-<h3 id="정리">정리</h3>
-<ul>
-<li>기능당 E2E 테스트는 하나만 만든다. (잘 부품이 연결됐는지 정도) (가급적이면 적게 만든다.)</li>
-<li>테스트 대부분은 서비스 계층으로 한다.<ul>
-<li>Fake 객체 사용으로 시간 절감이 가능하며 비지니스 로직, 에지 케이스 모두 확인가능하다.</li>
-</ul>
-</li>
-<li>도메인 모델은 핵심 테스트만 작성하고 작게 유지한다.<ul>
-<li>변경이 용이해진다.</li>
-</ul>
-</li>
-</ul>
+<blockquote>
+<p>Note. Part 1에서 서비스 계층과 도메인 모델 결합을 끊기 위해 원시 타입을 이용했는데 이벤트 사용하는 건 괜찮은가? 도메인 변경은 여전히 가능하며
+이벤트 변경은 도메인 변경보다는 훨씬 적을 것으로 예상된다. 그리고 함수 시그니쳐가 복잡했었는데 이벤트 안으로 모두 들어가서 인지가 쉬워졌다.</p>
+</blockquote>
+<p>(WIP)</p>
 
                                 
                                 </section>
@@ -430,14 +411,10 @@ tests/e2e/test_api.py
 
             
                 
-                <a href="../chapter4/" class="navigation navigation-prev " aria-label="Previous page: Chapter 4. 서비스 계층">
+                <a href="../chapter8/" class="navigation navigation-prev navigation-unique" aria-label="Previous page: Chapter 8. 이벤트와 메시지 버스">
                     <i class="fa fa-angle-left"></i>
                 </a>
                 
-                
-                <a href="../chapter6/" class="navigation navigation-next " aria-label="Next page: Chapter 6. 작업 단위 패턴">
-                    <i class="fa fa-angle-right"></i>
-                </a>
                 
             
         
@@ -446,7 +423,7 @@ tests/e2e/test_api.py
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Chapter 5. 높은 기어비와 낮은 기어비의 TDD","level":"2.5","depth":1,"next":{"title":"Chapter 6. 작업 단위 패턴","level":"2.6","depth":1,"path":"chapter6/README.md","ref":"chapter6/README.md","articles":[]},"previous":{"title":"Chapter 4. 서비스 계층","level":"2.4","depth":1,"path":"chapter4/README.md","ref":"chapter4/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter5/README.md","mtime":"2021-08-16T09:27:48.905Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-16T09:27:55.415Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Chapter 9. 메시지 버스를 타고 시내로 나가기","level":"3.2","depth":1,"previous":{"title":"Chapter 8. 이벤트와 메시지 버스","level":"3.1","depth":1,"path":"chapter8/README.md","ref":"chapter8/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter9/README.md","mtime":"2021-08-16T09:27:48.905Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-16T09:27:55.415Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>
