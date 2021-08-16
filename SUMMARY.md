@@ -11,3 +11,4 @@
 * [Chapter 5. 높은 기어비와 낮은 기어비의 TDD](chapter5/README.md)
 * [Chapter 6. 작업 단위 패턴](chapter6/README.md)
 * [Chapter 7. 애그리게이트와 일관성 경계](chapter7/README.md)
+* [Part 1 정리](part1-summary/README.md)
