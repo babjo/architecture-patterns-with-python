@@ -384,57 +384,59 @@
     sku: <span class="hljs-built_in">str</span>
 </code></pre>
 <ul>
-<li><p>할당이 불가능하면 이벤트가 발생해야한다.</p>
+<li>할당이 불가능하면 이벤트가 발생해야한다.</li>
+</ul>
 <pre><code class="lang-python"><span class="hljs-comment"># src/tests/unit/test_product.py</span>
 <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_records_out_of_stock_event_if_cannot_allocate</span>():</span>
-  batch = Batch(<span class="hljs-string">&apos;batch1&apos;</span>, <span class="hljs-string">&apos;SMALL-FORK&apos;</span>, <span class="hljs-number">10</span>, eta=<span class="hljs-literal">None</span>)
-  product = Product(sku=<span class="hljs-string">&apos;SMALL-FORK&apos;</span>, batches=[batch])
-  product.allocate(OrderLine(<span class="hljs-string">&apos;order1&apos;</span>, <span class="hljs-string">&apos;SMALL-FORK&apos;</span>, <span class="hljs-number">10</span>))
+    batch = Batch(<span class="hljs-string">&apos;batch1&apos;</span>, <span class="hljs-string">&apos;SMALL-FORK&apos;</span>, <span class="hljs-number">10</span>, eta=<span class="hljs-literal">None</span>)
+    product = Product(sku=<span class="hljs-string">&apos;SMALL-FORK&apos;</span>, batches=[batch])
+    product.allocate(OrderLine(<span class="hljs-string">&apos;order1&apos;</span>, <span class="hljs-string">&apos;SMALL-FORK&apos;</span>, <span class="hljs-number">10</span>))
 
-  allocation = product.allocate(OrderLine(<span class="hljs-string">&apos;order2&apos;</span>, <span class="hljs-string">&apos;SMALL-FORK&apos;</span>, <span class="hljs-number">1</span>))
+    allocation = product.allocate(OrderLine(<span class="hljs-string">&apos;order2&apos;</span>, <span class="hljs-string">&apos;SMALL-FORK&apos;</span>, <span class="hljs-number">1</span>))
 
-  <span class="hljs-keyword">assert</span> product.events[-<span class="hljs-number">1</span>] == events.OutOfStock(sku=<span class="hljs-string">&apos;SMALL-FORK&apos;</span>)
-  <span class="hljs-keyword">assert</span> allocation <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>
+    <span class="hljs-keyword">assert</span> product.events[-<span class="hljs-number">1</span>] == events.OutOfStock(sku=<span class="hljs-string">&apos;SMALL-FORK&apos;</span>)
+    <span class="hljs-keyword">assert</span> allocation <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>
 </code></pre>
-</li>
-</ul>
 <h4 id="이벤트-핸들러">이벤트 핸들러</h4>
 <ul>
-<li>이벤트를 처리할 핸들러를 만든다.
-```python<h1 id="srcallocationservicelayermessagebuspy">src/allocation/service_layer/messagebus.py</h1>
-def handle(event: events.Event):
-  for handler in HANDLERS[type(event)]:<pre><code>  handler(event)
-</code></pre></li>
+<li>이벤트를 처리할 핸들러를 만든다.</li>
 </ul>
-<p>def send_out_of_stock_notification(event: events.Event):
-    email.send_mail(&apos;stock@made.com&apos;, f&apos;Out of stock for {event.sku}&apos;)</p>
-<p>HANDLERS = {
+<pre><code class="lang-python"><span class="hljs-comment"># src/allocation/service_layer/messagebus.py</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">handle</span>(<span class="hljs-params">event: events.Event</span>):</span>
+    <span class="hljs-keyword">for</span> handler <span class="hljs-keyword">in</span> HANDLERS[<span class="hljs-built_in">type</span>(event)]:
+        handler(event)
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">send_out_of_stock_notification</span>(<span class="hljs-params">event: events.Event</span>):</span>
+    email.send_mail(<span class="hljs-string">&apos;stock@made.com&apos;</span>, <span class="hljs-string">f&apos;Out of stock for <span class="hljs-subst">{event.sku}</span>&apos;</span>)
+
+HANDLERS = {
     events.OutOfStock: [send_out_of_stock_notification],
-}</p>
-<pre><code>
-#### 이벤트 발행
-- 이벤트, 이벤트 핸들러까지 만들었으니 이제 이벤트 발행이 필요하다.
-
-#### 서비스 계층에서 생성된 이벤트 발행
-```python
-# src/allocation/service_layer/services.py
-def allocate(
-        orderid: str, sku: str, qty: int,
+}
+</code></pre>
+<h4 id="이벤트-발행">이벤트 발행</h4>
+<ul>
+<li>이벤트, 이벤트 핸들러까지 만들었으니 이제 이벤트 발행이 필요하다.</li>
+</ul>
+<h4 id="서비스-계층에서-생성된-이벤트-발행">서비스 계층에서 생성된 이벤트 발행</h4>
+<pre><code class="lang-python"><span class="hljs-comment"># src/allocation/service_layer/services.py</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate</span>(<span class="hljs-params">
+        orderid: <span class="hljs-built_in">str</span>, sku: <span class="hljs-built_in">str</span>, qty: <span class="hljs-built_in">int</span>,
         uow: unit_of_work.AbstractUnitOfWork,
-) -&gt; str:
+</span>) -&gt; <span class="hljs-built_in">str</span>:</span>
     line = OrderLine(orderid, sku, qty)
-    with uow:
+    <span class="hljs-keyword">with</span> uow:
         product = uow.products.get(sku=line.sku)
-        if product is None:
-            raise InvalidSku(f&quot;Invalid sku {line.sku}&quot;)
+        <span class="hljs-keyword">if</span> product <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:
+            <span class="hljs-keyword">raise</span> InvalidSku(<span class="hljs-string">f&quot;Invalid sku <span class="hljs-subst">{line.sku}</span>&quot;</span>)
 
-        try:
+        <span class="hljs-keyword">try</span>:
             batchref = product.allocate(line)
             uow.commit()
-            return batchref
-        finally:
+            <span class="hljs-keyword">return</span> batchref
+        <span class="hljs-keyword">finally</span>:
             messagebus.handle(product.events)
-</code></pre><ul>
+</code></pre>
+<ul>
 <li>Exception 발생시 도메인 모델이 기록중인 events 를 발행한다. </li>
 </ul>
 <h4 id="서비스-계층에서-이벤트-생성-후-발행">서비스 계층에서 이벤트 생성 후 발행</h4>
@@ -466,50 +468,52 @@ def allocate(
 <h4 id="uow-에서-발행">UoW 에서 발행</h4>
 <ul>
 <li>UoW 에는 이미 try/catch 가 있고 도메인 모델에 대해 이미 알고 있으니 이벤트 발행에는 좋은 곳이다.</li>
-<li><p><code>commit()</code> 할 때 repo 에서 추적한 애그리게이트에서 생성된 Event 를 발행한다.</p>
+<li><code>commit()</code> 할 때 repo 에서 추적한 애그리게이트에서 생성된 Event 를 발행한다.</li>
+</ul>
 <pre><code class="lang-python"><span class="hljs-comment"># src/allocation/service_layer/unit_of_work.py</span>
 <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AbstractUnitOfWork</span>(<span class="hljs-params">abc.ABC</span>):</span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">commit</span>(<span class="hljs-params">self</span>):</span>
-      self._commit()
-      self.publish_events()
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">commit</span>(<span class="hljs-params">self</span>):</span>
+        self._commit()
+        self.publish_events()
 
-<span class="hljs-meta">  @abc.abstractmethod</span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">_commit</span>(<span class="hljs-params">self</span>):</span>
-      <span class="hljs-keyword">raise</span> <span class="hljs-literal">NotImplemented</span>
+<span class="hljs-meta">    @abc.abstractmethod</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">_commit</span>(<span class="hljs-params">self</span>):</span>
+        <span class="hljs-keyword">raise</span> <span class="hljs-literal">NotImplemented</span>
 
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">publish_events</span>(<span class="hljs-params">self</span>):</span>
-      <span class="hljs-keyword">for</span> product <span class="hljs-keyword">in</span> self.products.seen:
-          <span class="hljs-keyword">while</span> product.events:
-              event = product.events.pop(<span class="hljs-number">0</span>)
-              messagebus.handle(event)
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">publish_events</span>(<span class="hljs-params">self</span>):</span>
+        <span class="hljs-keyword">for</span> product <span class="hljs-keyword">in</span> self.products.seen:
+            <span class="hljs-keyword">while</span> product.events:
+                event = product.events.pop(<span class="hljs-number">0</span>)
+                messagebus.handle(event)
 </code></pre>
-</li>
-<li><p>애그리게이트 추적을 위해 <code>AbstractRepository</code>에 변경 또한 필요하다.</p>
+<ul>
+<li>애그리게이트 추적을 위해 <code>AbstractRepository</code>에 변경 또한 필요하다.</li>
+</ul>
 <pre><code class="lang-python"><span class="hljs-comment"># src/allocation/adapters/repository.py</span>
 <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AbstractRepository</span>(<span class="hljs-params">abc.ABC</span>):</span>
 
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self</span>):</span>
-      self.seen = <span class="hljs-built_in">set</span>()
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self</span>):</span>
+        self.seen = <span class="hljs-built_in">set</span>()
 
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">add</span>(<span class="hljs-params">self, product: model.Product</span>):</span>
-      self._add(product)
-      self.seen.add(product)
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">add</span>(<span class="hljs-params">self, product: model.Product</span>):</span>
+        self._add(product)
+        self.seen.add(product)
 
-<span class="hljs-meta">  @abc.abstractmethod</span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">_add</span>(<span class="hljs-params">self, product: model.Product</span>):</span>
-      <span class="hljs-keyword">raise</span> NotImplementedError
+<span class="hljs-meta">    @abc.abstractmethod</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">_add</span>(<span class="hljs-params">self, product: model.Product</span>):</span>
+        <span class="hljs-keyword">raise</span> NotImplementedError
 
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get</span>(<span class="hljs-params">self, sku</span>) -&gt; model.Product:</span>
-      product = self._get(sku)
-      <span class="hljs-keyword">if</span> product:
-          self.seen.add(product)
-      <span class="hljs-keyword">return</span> product
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get</span>(<span class="hljs-params">self, sku</span>) -&gt; model.Product:</span>
+        product = self._get(sku)
+        <span class="hljs-keyword">if</span> product:
+            self.seen.add(product)
+        <span class="hljs-keyword">return</span> product
 
-<span class="hljs-meta">  @abc.abstractmethod</span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">_get</span>(<span class="hljs-params">self, sku</span>) -&gt; model.Product:</span>
-      <span class="hljs-keyword">raise</span> NotImplementedError
+<span class="hljs-meta">    @abc.abstractmethod</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">_get</span>(<span class="hljs-params">self, sku</span>) -&gt; model.Product:</span>
+        <span class="hljs-keyword">raise</span> NotImplementedError
 </code></pre>
-</li>
+<ul>
 <li>서비스 계층에서 이벤트 발행하지 않고도 <code>UoW</code>로 이벤트가 발행된다. (서비스 계층 깨끗)</li>
 </ul>
 <h3 id="정리">정리</h3>
@@ -564,7 +568,7 @@ def allocate(
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Chapter 8. 이벤트와 메시지 버스","level":"3.1","depth":1,"previous":{"title":"Part 1 정리","level":"2.8","depth":1,"path":"part1-summary/README.md","ref":"part1-summary/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter8/README.md","mtime":"2021-08-16T02:52:49.671Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-16T02:52:57.110Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Chapter 8. 이벤트와 메시지 버스","level":"3.1","depth":1,"previous":{"title":"Part 1 정리","level":"2.8","depth":1,"path":"part1-summary/README.md","ref":"part1-summary/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter8/README.md","mtime":"2021-08-16T02:56:31.372Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-16T02:56:38.763Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>
