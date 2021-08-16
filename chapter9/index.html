@@ -339,7 +339,6 @@
     qty: <span class="hljs-built_in">int</span>
     eta: <span class="hljs-type">Optional</span>[date] = <span class="hljs-literal">None</span>
 
-
 <span class="hljs-meta">@dataclass</span>
 <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AllocationRequired</span>(<span class="hljs-params">Event</span>):</span>
     orderid: <span class="hljs-built_in">str</span>
@@ -361,7 +360,6 @@
         product.batches.append(model.Batch(event.ref, event.sku, event.qty, event.eta))
         uow.commit()
 
-
 <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate</span>(<span class="hljs-params">
         event: events.AllocationRequired,
         uow: unit_of_work.AbstractUnitOfWork,
@@ -374,7 +372,6 @@
         batchref = product.allocate(line)
         uow.commit()
     <span class="hljs-keyword">return</span> batchref
-
 
 <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">send_out_of_stock_notification</span>(<span class="hljs-params">event: events.OutOfStock</span>):</span>
     email.send_mail(<span class="hljs-string">&apos;stock@made.com&apos;</span>, <span class="hljs-string">f&apos;Out of stock for <span class="hljs-subst">{event.sku}</span>&apos;</span>)
@@ -423,7 +420,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Chapter 9. 메시지 버스를 타고 시내로 나가기","level":"3.2","depth":1,"previous":{"title":"Chapter 8. 이벤트와 메시지 버스","level":"3.1","depth":1,"path":"chapter8/README.md","ref":"chapter8/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter9/README.md","mtime":"2021-08-16T09:27:48.905Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-16T09:27:55.415Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Chapter 9. 메시지 버스를 타고 시내로 나가기","level":"3.2","depth":1,"previous":{"title":"Chapter 8. 이벤트와 메시지 버스","level":"3.1","depth":1,"path":"chapter8/README.md","ref":"chapter8/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter9/README.md","mtime":"2021-08-16T09:29:26.822Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-16T09:29:36.301Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>
