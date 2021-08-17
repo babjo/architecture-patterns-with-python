@@ -380,7 +380,122 @@
 <p>Note. Part 1에서 서비스 계층과 도메인 모델 결합을 끊기 위해 원시 타입을 이용했는데 이벤트 사용하는 건 괜찮은가? 도메인 변경은 여전히 가능하며
 이벤트 변경은 도메인 변경보다는 훨씬 적을 것으로 예상된다. 그리고 함수 시그니쳐가 복잡했었는데 이벤트 안으로 모두 들어가서 인지가 쉬워졌다.</p>
 </blockquote>
-<p>(WIP)</p>
+<h3 id="메시지-버스로-이벤트-처리하기">메시지 버스로 이벤트 처리하기</h3>
+<ul>
+<li><code>UoW</code> 에서 메시지 버스로 이벤트를 처리하도록 구현했었다.</li>
+<li>이는 <code>UoW</code> 에서 생성된 이벤트 없이 웹 계층에서 이벤트를 전달하는 경우 사용할 수 없다.</li>
+<li>메시지 버스에서 <code>UoW</code> 로부터 이벤트를 가져오도록 변경할 필요가 있다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-comment"># src/allocation/service_layer/messagebus.py</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">handle</span>(<span class="hljs-params">event: events.Event, uow: unit_of_work.AbstractUnitOfWork</span>):</span>
+    queue = [event]
+    <span class="hljs-keyword">while</span> queue:
+        event = queue.pop(<span class="hljs-number">0</span>)
+        <span class="hljs-keyword">for</span> handler <span class="hljs-keyword">in</span> HANDLERS[<span class="hljs-built_in">type</span>(event)]:
+            handler(event, uow)
+            queue.extend(uow.collect_new_events())
+</code></pre>
+<ul>
+<li>UoW 에서는 새로운 이벤트에 대해 반환하고 messagebus 는 events 를 직접 가져와 처리한다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-comment"># src/allocation/service_layer/unit_of_work.py</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AbstractUnitOfWork</span>:</span>
+    ...  
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">collect_new_events</span>(<span class="hljs-params">self</span>):</span>
+        <span class="hljs-keyword">for</span> product <span class="hljs-keyword">in</span> self.products.seen:
+            <span class="hljs-keyword">while</span> product.events:
+                <span class="hljs-keyword">yield</span> product.events.pop(<span class="hljs-number">0</span>)
+</code></pre>
+<ul>
+<li>테스트 케이스도 변경 해야한다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-comment"># tests/unit/test_handlers.py</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">TestAddBatch</span>:</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_for_new_product</span>(<span class="hljs-params">self</span>):</span>
+        uow = FakeUnitOfWork()
+        messagebus.handle(
+            events.BatchCreated(<span class="hljs-string">&quot;b1&quot;</span>, <span class="hljs-string">&quot;CRUNCHY-ARMCHAIR&quot;</span>, <span class="hljs-number">100</span>, <span class="hljs-literal">None</span>), uow
+        )
+        <span class="hljs-keyword">assert</span> uow.products.get(<span class="hljs-string">&quot;CRUNCHY-ARMCHAIR&quot;</span>) <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>
+        <span class="hljs-keyword">assert</span> uow.committed
+</code></pre>
+<h3 id="웹-계층에서-메시지-버스-사용하기">웹 계층에서 메시지 버스 사용하기</h3>
+<ul>
+<li><p>웹 계층에서 응답을 반환해주려면 결과도 버스를 통해 받을 수 있어야한다. </p>
+<pre><code class="lang-python"><span class="hljs-comment"># src/allocation/service_layer/messagebus.py</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">handle</span>(<span class="hljs-params">event: events.Event, uow: unit_of_work.AbstractUnitOfWork</span>):</span>
+  results = []
+  queue = [event]
+  <span class="hljs-keyword">while</span> queue:
+      event = queue.pop(<span class="hljs-number">0</span>)
+      <span class="hljs-keyword">for</span> handler <span class="hljs-keyword">in</span> HANDLERS[<span class="hljs-built_in">type</span>(event)]:
+          results.append(handler(event, uow))
+          queue.extend(uow.collect_new_events())
+  <span class="hljs-keyword">return</span> results
+</code></pre>
+</li>
+<li><p>웹에서 메시지 버시를 사용도록 변경한다.</p>
+</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-comment"># src/allocation/entrypoints/flask_app.py</span>
+<span class="hljs-meta">@app.route(<span class="hljs-params"><span class="hljs-string">&quot;/allocate&quot;</span>, methods=[<span class="hljs-string">&quot;POST&quot;</span>]</span>)</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate_endpoint</span>():</span>
+    <span class="hljs-keyword">try</span>:
+        event = events.AllocationRequired(
+            request.json[<span class="hljs-string">&quot;orderid&quot;</span>], request.json[<span class="hljs-string">&quot;sku&quot;</span>], request.json[<span class="hljs-string">&quot;qty&quot;</span>]
+        )
+        results = messagebus.handle(event, unit_of_work.SqlAlchemyUnitOfWork())
+        batchref = results.pop(<span class="hljs-number">0</span>)
+    <span class="hljs-keyword">except</span> InvalidSku <span class="hljs-keyword">as</span> e:
+        <span class="hljs-keyword">return</span> {<span class="hljs-string">&quot;message&quot;</span>: <span class="hljs-built_in">str</span>(e)}, <span class="hljs-number">400</span>
+
+    <span class="hljs-keyword">return</span> {<span class="hljs-string">&quot;batchref&quot;</span>: batchref}, <span class="hljs-number">201</span>
+</code></pre>
+<h3 id="요구사항-구현하기">요구사항 구현하기</h3>
+<ul>
+<li>위 과정들로 리팩토링은 모두 끝났다. 이제 배치 수량 변경에 대한 요구사항을 이벤트로 처리할 수 있다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-comment"># src/allocation/domain/events.pys</span>
+<span class="hljs-meta">@dataclass</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BatchQuantityChanged</span>(<span class="hljs-params">Event</span>):</span>
+    ref: <span class="hljs-built_in">str</span>
+    qty: <span class="hljs-built_in">int</span>
+</code></pre>
+<ul>
+<li><code>BatchQuantityChanged</code>에 대한 핸들러도 만들어준다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-comment"># src/allocation/service_layer/handlers.py</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">change_batch_quantity</span>(<span class="hljs-params">event: events.BatchQuantityChanged, uow: unit_of_work.AbstractUnitOfWork</span>):</span>
+    <span class="hljs-keyword">with</span> uow:
+        product = uow.products.get_by_batchref(batchref=event.ref)
+        product.change_batch_quantity(ref=event.ref, qty=event.qty)
+        uow.commit()
+</code></pre>
+<ul>
+<li>수량이 변경되는 것에 대한 비지니스 로직을 도메인 모델에 추가한다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-comment"># src/allocation/domain/model.py</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Product</span>:</span>
+    ...
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">change_batch_quantity</span>(<span class="hljs-params">self, ref: <span class="hljs-built_in">str</span>, qty: <span class="hljs-built_in">int</span></span>):</span>
+        batch = <span class="hljs-built_in">next</span>(b <span class="hljs-keyword">for</span> b <span class="hljs-keyword">in</span> self.batches <span class="hljs-keyword">if</span> b.reference == ref)
+        batch._purchased_quantity = qty
+        <span class="hljs-keyword">while</span> batch.available_quantity &lt; <span class="hljs-number">0</span>:
+            line = batch.deallocate_one()
+            self.events.append(
+                events.AllocationRequired(line.orderid, line.sku, line.qty)
+            )
+</code></pre>
+<ul>
+<li>새로운 요구사항을 새로운 아키텍처에 맞게 구현했다.</li>
+</ul>
+<h3 id="정리">정리</h3>
+<ul>
+<li>이벤트 기반 아키텍쳐는 복잡한 요구 사항 대부분을 처리할 수 있다.</li>
+<li>아키텍쳐 측면에서는 아무 내용을 추가해도 복잡도가 늘어나지 않는다.</li>
+<li>다만 메시지 버스를 보면 언제 끝날지 예측할 수 없다.</li>
+<li>이벤트 필드가 중복이 있을 수 있으며 필드 추가서 여러 이벤트 변경이 필요할 수 있다.</li>
+</ul>
 
                                 
                                 </section>
@@ -420,7 +535,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Chapter 9. 메시지 버스를 타고 시내로 나가기","level":"3.2","depth":1,"previous":{"title":"Chapter 8. 이벤트와 메시지 버스","level":"3.1","depth":1,"path":"chapter8/README.md","ref":"chapter8/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter9/README.md","mtime":"2021-08-16T09:29:26.822Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-16T09:29:36.301Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Chapter 9. 메시지 버스를 타고 시내로 나가기","level":"3.2","depth":1,"previous":{"title":"Chapter 8. 이벤트와 메시지 버스","level":"3.1","depth":1,"path":"chapter8/README.md","ref":"chapter8/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter9/README.md","mtime":"2021-08-17T13:25:34.129Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-17T13:25:42.373Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>
