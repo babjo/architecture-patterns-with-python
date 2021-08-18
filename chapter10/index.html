@@ -1,0 +1,583 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <title>Chapter 10. 커맨드와 커맨드 핸들러 · HonKit</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="HonKit 3.6.20">
+        
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    
+    <link rel="prev" href="../chapter9/" />
+    
+
+    </head>
+    <body>
+        
+<div class="book honkit-cloak">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="../">
+            
+                <a href="../">
+            
+                    
+                    이 문서에 대해
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="../chapter0/">
+            
+                <a href="../chapter0/">
+            
+                    
+                    Chapter 0. 도입
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">Part 1. 도메인 모델링을 지원하는 아키텍처 구축</li>
+        
+        
+    
+        <li class="chapter " data-level="2.1" data-path="../chapter1/">
+            
+                <a href="../chapter1/">
+            
+                    
+                    Chapter 1. 도메인 모델링
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.2" data-path="../chapter2/">
+            
+                <a href="../chapter2/">
+            
+                    
+                    Chapter 2. 저장소 패턴
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.3" data-path="../chapter3/">
+            
+                <a href="../chapter3/">
+            
+                    
+                    Chapter 3. 막간: 결합과 추상화
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.4" data-path="../chapter4/">
+            
+                <a href="../chapter4/">
+            
+                    
+                    Chapter 4. 서비스 계층
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.5" data-path="../chapter5/">
+            
+                <a href="../chapter5/">
+            
+                    
+                    Chapter 5. 높은 기어비와 낮은 기어비의 TDD
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.6" data-path="../chapter6/">
+            
+                <a href="../chapter6/">
+            
+                    
+                    Chapter 6. 작업 단위 패턴
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.7" data-path="../chapter7/">
+            
+                <a href="../chapter7/">
+            
+                    
+                    Chapter 7. 애그리게이트와 일관성 경계
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.8" data-path="../part1-summary/">
+            
+                <a href="../part1-summary/">
+            
+                    
+                    Part 1 정리
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">Part 2. 이벤트 기반 아키텍처</li>
+        
+        
+    
+        <li class="chapter " data-level="3.1" data-path="../chapter8/">
+            
+                <a href="../chapter8/">
+            
+                    
+                    Chapter 8. 이벤트와 메시지 버스
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2" data-path="../chapter9/">
+            
+                <a href="../chapter9/">
+            
+                    
+                    Chapter 9. 메시지 버스를 타고 시내로 나가기
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="3.3" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Chapter 10. 커맨드와 커맨드 핸들러
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://github.com/honkit/honkit" target="blank" class="gitbook-link">
+            Published with HonKit
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href=".." >Chapter 10. 커맨드와 커맨드 핸들러</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h2 id="커맨드와-커맨드-핸들러">커맨드와 커맨드 핸들러</h2>
+<ul>
+<li>9장에서 <code>BatchCreated</code> 이벤트가 발생했을 때 핸들러를 통해 배치를 만들었다.</li>
+<li>API를 통해 배치 생성 요청이 들어온 경우 <code>BatchCreated</code> 이벤트를 만들어서 처리하는게 조금 어색하다.</li>
+<li>API 요청은 내부 이벤트 생성을 통한 처리보다는 커맨드와 커맨드 핸들러를 통한 처리가 어울린다.</li>
+</ul>
+<h3 id="커맨드와-이벤트">커맨드와 이벤트</h3>
+<ul>
+<li>커맨드는 시스템이 어떤 일을 수행하길 바라는 의도를 담고 있다.</li>
+<li>이벤트는 그저 관심있는 모든 리스너에게 보내는 메시지일 뿐이다.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>-</th>
+<th>이벤트</th>
+<th>커맨드</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>이름</td>
+<td>과거형</td>
+<td>명령형</td>
+</tr>
+<tr>
+<td>오류 처리</td>
+<td>(송신하는 쪽과) 독립적으로 실패함</td>
+<td>(송신하는 쪽에 오류를 돌려주면서) 시끄럽게 실패함</td>
+</tr>
+<tr>
+<td>받는 행위자</td>
+<td>모든 리스너</td>
+<td>정해진 수신자</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>아래와 같이 커맨드를 정의할 수 있다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Command</span>:</span>
+    <span class="hljs-keyword">pass</span>
+
+
+<span class="hljs-meta">@dataclass</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Allocate</span>(<span class="hljs-params">Command</span>):</span>
+    orderid: <span class="hljs-built_in">str</span>
+    sku: <span class="hljs-built_in">str</span>
+    qty: <span class="hljs-built_in">int</span>
+
+
+<span class="hljs-meta">@dataclass</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">CreateBatch</span>(<span class="hljs-params">Command</span>):</span>
+    ref: <span class="hljs-built_in">str</span>
+    sku: <span class="hljs-built_in">str</span>
+    qty: <span class="hljs-built_in">int</span>
+    eta: <span class="hljs-type">Optional</span>[date] = <span class="hljs-literal">None</span>
+
+
+<span class="hljs-meta">@dataclass</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ChangeBatchQuantity</span>(<span class="hljs-params">Command</span>):</span>
+    ref: <span class="hljs-built_in">str</span>
+    qty: <span class="hljs-built_in">int</span>
+</code></pre>
+<h3 id="커맨드-핸들러-구현">커맨드 핸들러 구현</h3>
+<ul>
+<li>위에서 커맨드를 만들었으니 이를 처리할 수 있도록 커맨드 핸들러가 필요하다.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-comment"># src/allocation/service_layer/handlers.py</span>
+COMMAND_HANDLERS = {
+    commands.Allocate: handlers.allocate,
+    commands.CreateBatch: handlers.add_batch,
+    commands.ChangeBatchQuantity: handlers.change_batch_quantity,
+}  <span class="hljs-comment"># type: <span class="hljs-type">Dict</span>[<span class="hljs-type">Type</span>[commands.Command], <span class="hljs-type">Callable</span>]</span>
+</code></pre>
+<ul>
+<li>그리고 메시지 버스에서 메시지가 커맨드면 커맨드 핸들러로 처리하도록 하자.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-comment"># src/allocation/service_layer/messagebus.py</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">handle</span>(<span class="hljs-params">
+        message: Message,
+        uow: unit_of_work.AbstractUnitOfWork,
+</span>):</span>
+    results = []
+    queue = [message]
+    <span class="hljs-keyword">while</span> queue:
+        message = queue.pop(<span class="hljs-number">0</span>)
+        <span class="hljs-keyword">if</span> <span class="hljs-built_in">isinstance</span>(message, events.Event):
+            handle_event(message, queue, uow)
+        <span class="hljs-keyword">elif</span> <span class="hljs-built_in">isinstance</span>(message, commands.Command):
+            cmd_result = handle_command(message, queue, uow)
+            results.append(cmd_result)
+        <span class="hljs-keyword">else</span>:
+            <span class="hljs-keyword">raise</span> Exception(<span class="hljs-string">f&quot;<span class="hljs-subst">{message}</span> was not an Event or Command&quot;</span>)
+    <span class="hljs-keyword">return</span> results
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">handle_event</span>(<span class="hljs-params">
+        event: events.Event,
+        queue: <span class="hljs-type">List</span>[Message],
+        uow: unit_of_work.AbstractUnitOfWork,
+</span>):</span>
+    <span class="hljs-keyword">for</span> handler <span class="hljs-keyword">in</span> EVENT_HANDLERS[<span class="hljs-built_in">type</span>(event)]:
+        <span class="hljs-keyword">try</span>:
+            logger.debug(<span class="hljs-string">&quot;handling event %s with handler %s&quot;</span>, event, handler)
+            handler(event, uow=uow)
+            queue.extend(uow.collect_new_events())
+        <span class="hljs-keyword">except</span> Exception:
+            logger.exception(<span class="hljs-string">&quot;Exception handling event %s&quot;</span>, event)
+            <span class="hljs-keyword">continue</span>
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">handle_command</span>(<span class="hljs-params">
+        command: commands.Command,
+        queue: <span class="hljs-type">List</span>[Message],
+        uow: unit_of_work.AbstractUnitOfWork,
+</span>):</span>
+    logger.debug(<span class="hljs-string">&quot;handling command %s&quot;</span>, command)
+    <span class="hljs-keyword">try</span>:
+        handler = COMMAND_HANDLERS[<span class="hljs-built_in">type</span>(command)]
+        result = handler(command, uow=uow)
+        queue.extend(uow.collect_new_events())
+        <span class="hljs-keyword">return</span> result
+    <span class="hljs-keyword">except</span> Exception:
+        logger.exception(<span class="hljs-string">&quot;Exception handling command %s&quot;</span>, command)
+        <span class="hljs-keyword">raise</span>
+</code></pre>
+<h3 id="예외-처리-방식의-차이점">예외 처리 방식의 차이점</h3>
+<ul>
+<li>위 구현을 보면 이벤트 처리시 에러는 무시, 커맨드 처리시 에러는 무시하지 않는다.</li>
+<li>이벤트 처리에서 발생한 에러는 무시해도 되는걸까?</li>
+<li>한 커맨드는 한 애그리게이트 변경하며 일관성 유지를 위해 전체 성공하거나 전체 실패해야한다. (실패를 무시할 수 없다.)</li>
+<li>이벤트는 애그리게이트 변경 이후 발생한다.</li>
+<li>이벤트 처리는 커맨드 성공 여부와는 아무런 관계가 없으며 실패를 무시하는 것이 사용성에 더 좋을 수 있다.<ul>
+<li>배치 할당 후 이메일 전송 실패로 배치 할당을 rollback 할 필요는 없다.</li>
+</ul>
+</li>
+<li>이벤트 처리에 대한 실패를 격리함으로 시스템 신뢰도가 높아질 수 있다.</li>
+</ul>
+<h3 id="동기적으로-오류-복구하기">동기적으로 오류 복구하기</h3>
+<ul>
+<li>이벤트 실패는 back-off 와 함께 retry 해서 회복시킬 수 있다.</li>
+<li>파이썬에서는 <code>tenacity</code> 라이브러리를 보통 사용한다.</li>
+</ul>
+<h3 id="정리">정리</h3>
+<ul>
+<li>커맨드를 도입하면서 의도가 명시적으로 드러났다. (<code>BatchCreated</code> -&gt; <code>CreateBatch</code>)</li>
+<li>커맨드와 이벤트를 다른 방식으로 처리하면서 어느 상황에서 꼭 성공해야하는지 분명해졌다.</li>
+<li>이벤트 처리는 실패를 삼킨다. 실패감지 할 수 있도록 모니터링을 더 잘해야한다.<ul>
+<li>실패 범위를 줄이기 위해 실패를 작게 만드는 것도 중요해진다.</li>
+</ul>
+</li>
+</ul>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="../chapter9/" class="navigation navigation-prev navigation-unique" aria-label="Previous page: Chapter 9. 메시지 버스를 타고 시내로 나가기">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Chapter 10. 커맨드와 커맨드 핸들러","level":"3.3","depth":1,"previous":{"title":"Chapter 9. 메시지 버스를 타고 시내로 나가기","level":"3.2","depth":1,"path":"chapter9/README.md","ref":"chapter9/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter10/README.md","mtime":"2021-08-18T11:54:42.568Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-18T11:54:49.487Z"},"basePath":"..","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <noscript>
+        <style>
+            .honkit-cloak {
+                display: block !important;
+            }
+        </style>
+    </noscript>
+    <script>
+        // Restore sidebar state as critical path for prevent layout shift
+        function __init__getSidebarState(defaultValue){
+            var baseKey = "";
+            var key = baseKey + ":sidebar";
+            try {
+                var value = localStorage[key];
+                if (value === undefined) {
+                    return defaultValue;
+                }
+                var parsed = JSON.parse(value);
+                return parsed == null ? defaultValue : parsed;
+            } catch (e) {
+                return defaultValue;
+            }
+        }
+        function __init__restoreLastSidebarState() {
+            var isMobile = window.matchMedia("(max-width: 600px)").matches;
+            if (isMobile) {
+                // Init last state if not mobile
+                return;
+            }
+            var sidebarState = __init__getSidebarState(true);
+            var book = document.querySelector(".book");
+            // Show sidebar if it enabled
+            if (sidebarState && book) {
+                book.classList.add("without-animation", "with-summary");
+            }
+        }
+
+        try {
+            __init__restoreLastSidebarState();
+        } finally {
+            var book = document.querySelector(".book");
+            book.classList.remove("honkit-cloak");
+        }
+    </script>
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+
