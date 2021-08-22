@@ -249,4 +249,4 @@ def test_unhappy_path_returns_400_and_error_message():
   - 변경된 내용을 영속화한다.
 - 도메인 서비스는 도메인 모델은 맞지만 상태가 있는 엔티티나 값 객체에 속하지 않는 로직이다.
   - 예를 들면 쇼핑카트 앱에서 세금을 계산하는 경우, `세금 계산`은 중요한 도메인이지만 `쇼핑카트`와는 별개이며 영속적인 엔티티도 아니다.
-  - 이 경우 상태가 없는 `TaxCalculator`, `calculate_tex` 함수에서 세금 계산을 할 수 있다. 
+  - 이 경우 상태가 없는 `TaxCalculator`, `calculate_tax` 함수에서 세금 계산을 할 수 있다. 
