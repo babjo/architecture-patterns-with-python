@@ -4,6 +4,7 @@
   ],
   "pluginsConfig": {
     "uml": {
+      "format": "svg",
       "charset": "utf8"
     }
   }

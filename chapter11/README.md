@@ -113,7 +113,7 @@ def publish(channel, event: events.Event):
     r.publish(channel, json.dumps(asdict(event)))
 ```
 
-- Product 애그리거트를 통해 배치 수량을 변경하면서 재할당이 필요한 경우 `Allocate` 커맨드를 발행한다. 
+- Product 애그리거트를 통해 배치 수량을 변경하면서 재할당이 필요한 경우 `Allocate` 커맨드를 메시지 버스로 발행한다. 
 
 ```python
 # src/allocation/domain/model.py
@@ -126,7 +126,43 @@ class Product:
             self.events.append(commands.Allocate(line.orderid, line.sku, line.qty))
 ```
 
-- `Allocate` 커맨드를 구독할 소비자를 만들고 처리될 수 있도록 한다.
+- 메시지 버스 내 `Allocate` 커맨드는 커맨드 핸들러로 처리된다.
+- `Product.allocate()`가 수행되면서 `Allocated` 이벤트를 발행하여 외부에 알릴 수 있다.
+
+```python
+# src/allocation/domain/model.py
+class Product:
+    def allocate(self, line: OrderLine) -> str:
+        try:
+            batch = next(b for b in sorted(self.batches) if b.can_allocate(line))
+            batch.allocate(line)
+            self.version_number += 1
+            self.events.append(
+                events.Allocated(
+                    orderid=line.orderid,
+                    sku=line.sku,
+                    qty=line.qty,
+                    batchref=batch.reference,
+                )
+            )
+            return batch.reference
+```
+
+- 이벤트 핸들러로 외부로 이벤트 발행한다.
+
+```python
+# src/allocation/service_layer/messagebus.py 
+EVENT_HANDLERS = {
+    events.Allocated: [handlers.publish_allocated_event],
+}  # type: Dict[Type[events.Event], List[Callable]]
+
+# src/allocation/service_layer/handlers.py
+def publish_allocated_event(
+    event: events.Allocated,
+    uow: unit_of_work.AbstractUnitOfWork,
+):
+    redis_eventpublisher.publish("line_allocated", event)
+```
 
 ### 마치며
 
