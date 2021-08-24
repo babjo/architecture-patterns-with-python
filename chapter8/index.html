@@ -445,7 +445,7 @@ HANDLERS = {
 <ul>
 <li>이벤트, 이벤트 핸들러까지 만들었으니 이제 이벤트 발행이 필요하다.</li>
 </ul>
-<h4 id="서비스-계층에서-생성된-이벤트-발행">서비스 계층에서 생성된 이벤트 발행</h4>
+<h5 id="서비스-계층에서-생성된-이벤트-발행">서비스 계층에서 생성된 이벤트 발행</h5>
 <pre><code class="lang-python"><span class="hljs-comment"># src/allocation/service_layer/services.py</span>
 <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate</span>(<span class="hljs-params">
         orderid: <span class="hljs-built_in">str</span>, sku: <span class="hljs-built_in">str</span>, qty: <span class="hljs-built_in">int</span>,
@@ -467,7 +467,7 @@ HANDLERS = {
 <ul>
 <li>Exception 발생시 도메인 모델이 기록중인 events 를 발행한다. </li>
 </ul>
-<h4 id="서비스-계층에서-이벤트-생성-후-발행">서비스 계층에서 이벤트 생성 후 발행</h4>
+<h5 id="서비스-계층에서-이벤트-생성-후-발행">서비스 계층에서 이벤트 생성 후 발행</h5>
 <pre><code class="lang-python"><span class="hljs-comment"># src/allocation/service_layer/services.py</span>
 <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">allocate</span>(<span class="hljs-params">
         orderid: <span class="hljs-built_in">str</span>, sku: <span class="hljs-built_in">str</span>, qty: <span class="hljs-built_in">int</span>,
@@ -493,7 +493,7 @@ HANDLERS = {
 </ul>
 </li>
 </ul>
-<h4 id="uow-에서-발행">UoW 에서 발행</h4>
+<h5 id="uow-에서-발행">UoW 에서 발행</h5>
 <ul>
 <li>UoW 에는 이미 try/catch 가 있고 도메인 모델에 대해 이미 알고 있으니 이벤트 발행에는 좋은 곳이다.</li>
 <li><code>commit()</code> 할 때 repo 에서 추적한 애그리게이트에서 생성된 Event 를 발행한다.</li>
@@ -600,7 +600,7 @@ HANDLERS = {
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Chapter 8. 이벤트와 메시지 버스","level":"3.1","depth":1,"next":{"title":"Chapter 9. 메시지 버스를 타고 시내로 나가기","level":"3.2","depth":1,"path":"chapter9/README.md","ref":"chapter9/README.md","articles":[]},"previous":{"title":"Part 1 정리","level":"2.8","depth":1,"path":"part1-summary/README.md","ref":"part1-summary/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter8/README.md","mtime":"2021-08-24T07:03:43.402Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-24T07:03:49.318Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Chapter 8. 이벤트와 메시지 버스","level":"3.1","depth":1,"next":{"title":"Chapter 9. 메시지 버스를 타고 시내로 나가기","level":"3.2","depth":1,"path":"chapter9/README.md","ref":"chapter9/README.md","articles":[]},"previous":{"title":"Part 1 정리","level":"2.8","depth":1,"path":"part1-summary/README.md","ref":"part1-summary/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter8/README.md","mtime":"2021-08-24T07:49:51.120Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-24T07:49:56.739Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>
