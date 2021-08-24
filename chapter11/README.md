@@ -113,7 +113,7 @@ def publish(channel, event: events.Event):
     r.publish(channel, json.dumps(asdict(event)))
 ```
 
-- Product 애그리거트를 통해 배치 수량을 변경하면서 재할당이 필요한 경우 `Allocate` 커맨드를 메시지 버스로 발행한다. 
+- `Product` 애그리거트를 통해 배치 수량을 변경하면서 재할당이 필요한 경우 `Allocate` 커맨드를 메시지 버스로 발행한다. 
 
 ```python
 # src/allocation/domain/model.py
@@ -127,7 +127,7 @@ class Product:
 ```
 
 - 메시지 버스 내 `Allocate` 커맨드는 커맨드 핸들러로 처리된다.
-- `Product.allocate()`가 수행되면서 `Allocated` 이벤트를 발행하여 외부에 알릴 수 있다.
+- `product.allocate()`가 수행되면서 `Allocated` 이벤트를 발행하여 외부에 알릴 수 있다.
 
 ```python
 # src/allocation/domain/model.py
