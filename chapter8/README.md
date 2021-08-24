@@ -125,7 +125,7 @@ HANDLERS = {
 #### 이벤트 발행
 - 이벤트, 이벤트 핸들러까지 만들었으니 이제 이벤트 발행이 필요하다.
 
-#### 서비스 계층에서 생성된 이벤트 발행
+##### 서비스 계층에서 생성된 이벤트 발행
 
 ```python
 # src/allocation/service_layer/services.py
@@ -148,7 +148,7 @@ def allocate(
 ```
 - Exception 발생시 도메인 모델이 기록중인 events 를 발행한다. 
 
-#### 서비스 계층에서 이벤트 생성 후 발행
+##### 서비스 계층에서 이벤트 생성 후 발행
 
 ```python
 # src/allocation/service_layer/services.py
@@ -174,7 +174,7 @@ def allocate(
 - 서비스 계층에서 이벤트를 발행하는 패턴을 구현한 시스템이 많다.
   - 다만 저자가 생각하기에 더 나은 방법은 아래 소개한다.
 
-#### UoW 에서 발행
+##### UoW 에서 발행
 - UoW 에는 이미 try/catch 가 있고 도메인 모델에 대해 이미 알고 있으니 이벤트 발행에는 좋은 곳이다.
 - `commit()` 할 때 repo 에서 추적한 애그리게이트에서 생성된 Event 를 발행한다.
 
