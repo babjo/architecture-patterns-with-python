@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/babjo/architecture-patterns-with-python#readme",
   "devDependencies": {
+    "@ansanloms/honkit-plugin-uml": "^0.0.7",
     "honkit": "^3.6.20"
   }
 }
