@@ -407,7 +407,7 @@ r = redis.Redis(**config.get_redis_host_and_port())
     r.publish(channel, json.dumps(asdict(event)))
 </code></pre>
 <ul>
-<li>Product 애그리거트를 통해 배치 수량을 변경하면서 재할당이 필요한 경우 <code>Allocate</code> 커맨드를 메시지 버스로 발행한다. </li>
+<li><code>Product</code> 애그리거트를 통해 배치 수량을 변경하면서 재할당이 필요한 경우 <code>Allocate</code> 커맨드를 메시지 버스로 발행한다. </li>
 </ul>
 <pre><code class="lang-python"><span class="hljs-comment"># src/allocation/domain/model.py</span>
 <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Product</span>:</span>
@@ -420,7 +420,7 @@ r = redis.Redis(**config.get_redis_host_and_port())
 </code></pre>
 <ul>
 <li>메시지 버스 내 <code>Allocate</code> 커맨드는 커맨드 핸들러로 처리된다.</li>
-<li><code>Product.allocate()</code>가 수행되면서 <code>Allocated</code> 이벤트를 발행하여 외부에 알릴 수 있다.</li>
+<li><code>product.allocate()</code>가 수행되면서 <code>Allocated</code> 이벤트를 발행하여 외부에 알릴 수 있다.</li>
 </ul>
 <pre><code class="lang-python"><span class="hljs-comment"># src/allocation/domain/model.py</span>
 <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Product</span>:</span>
@@ -497,7 +497,7 @@ EVENT_HANDLERS = {
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Chapter 11. 이벤트 기반 아키텍처: 이벤트를 사용한 마이크로서비스 통합","level":"3.4","depth":1,"previous":{"title":"Chapter 10. 커맨드와 커맨드 핸들러","level":"3.3","depth":1,"path":"chapter10/README.md","ref":"chapter10/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":["@ansanloms/uml"],"pluginsConfig":{"uml":{"format":"svg","charset":"utf8"},"@ansanloms/uml":{},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter11/README.md","mtime":"2021-08-24T12:29:22.107Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-24T12:31:51.947Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Chapter 11. 이벤트 기반 아키텍처: 이벤트를 사용한 마이크로서비스 통합","level":"3.4","depth":1,"previous":{"title":"Chapter 10. 커맨드와 커맨드 핸들러","level":"3.3","depth":1,"path":"chapter10/README.md","ref":"chapter10/README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":["@ansanloms/uml"],"pluginsConfig":{"uml":{"format":"svg","charset":"utf8"},"@ansanloms/uml":{},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"chapter11/README.md","mtime":"2021-08-24T13:11:48.859Z","type":"markdown"},"gitbook":{"version":"3.6.20","time":"2021-08-24T13:11:58.479Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>
