@@ -21,13 +21,11 @@
 class Command:
     pass
 
-
 @dataclass
 class Allocate(Command):
     orderid: str
     sku: str
     qty: int
-
 
 @dataclass
 class CreateBatch(Command):
@@ -35,7 +33,6 @@ class CreateBatch(Command):
     sku: str
     qty: int
     eta: Optional[date] = None
-
 
 @dataclass
 class ChangeBatchQuantity(Command):

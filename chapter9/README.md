@@ -119,6 +119,7 @@ class TestAddBatch:
 ### 웹 계층에서 메시지 버스 사용하기
 
 - 웹 계층에서 응답을 반환해주려면 결과도 버스를 통해 받을 수 있어야한다. 
+
 ```python
 # src/allocation/service_layer/messagebus.py
 def handle(event: events.Event, uow: unit_of_work.AbstractUnitOfWork):
