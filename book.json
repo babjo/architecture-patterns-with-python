@@ -1,3 +1,10 @@
 {
-  "plugins": ["@ansanloms/uml"]
+  "plugins": [
+    "@ansanloms/uml"
+  ],
+  "pluginsConfig": {
+    "uml": {
+      "charset": "utf8"
+    }
+  }
 }
